@@ -1,7 +1,8 @@
 """Idempotent seed: indexes, divisions, metadata fields and the super admin.
 
-Run with `python -m app.seed`. Records that already exist are never overwritten,
-so changes made from the Admin page survive restarts.
+Run with `python -m app.seed`. Default divisions and fields are only added to an
+empty collection, so anything an admin renames or deletes stays that way after a
+restart. Existing records are never overwritten.
 """
 
 import logging
@@ -94,21 +95,30 @@ def insert_if_missing(collection, query, document):
     return result.upserted_id is not None
 
 
-def seed_divisions(db, admin_division):
-    """Create the default divisions plus the admin's division if it isn't one of them."""
-    divisions = list(SEED_DIVISIONS)
-    if admin_division not in {d["name"] for d in divisions}:
-        divisions.append({"name": admin_division, "code": None, "description": "Administrator division."})
-
+def seed_divisions(db):
+    """Create the default divisions on a fresh database."""
+    if db.divisions.estimated_document_count():
+        return []
     created = []
-    for division in divisions:
+    for division in SEED_DIVISIONS:
         if insert_if_missing(db.divisions, {"name": division["name"]}, {**division, "created_at": utcnow()}):
             created.append(division["name"])
     return created
 
 
+def ensure_division(db, name):
+    """Make sure a division exists, creating a bare one if needed. Returns True if created."""
+    return insert_if_missing(
+        db.divisions,
+        {"name": name},
+        {"name": name, "code": None, "description": "Administrator division.", "created_at": utcnow()},
+    )
+
+
 def seed_metadata_fields(db):
-    """Create the default metadata fields, keeping any admin edits to existing ones."""
+    """Create the default metadata fields on a fresh database."""
+    if db.metadata_fields.estimated_document_count():
+        return []
     created = []
     for order, field in enumerate(SEED_FIELDS):
         now = utcnow()
@@ -136,6 +146,7 @@ def seed_admin(db, config):
     if db.users.find_one({"email": email}, {"_id": 1}):
         return False
 
+    ensure_division(db, config["ADMIN_DIVISION"])
     user = {
         "name": config["ADMIN_NAME"],
         "email": email,
@@ -152,7 +163,7 @@ def run_seed(db, config):
     """Create indexes and seed data, then sync metadata filter indexes. Returns a summary."""
     ensure_indexes(db)
     summary = {
-        "divisions_created": seed_divisions(db, config["ADMIN_DIVISION"]),
+        "divisions_created": seed_divisions(db),
         "fields_created": seed_metadata_fields(db),
         "admin_created": seed_admin(db, config),
     }
