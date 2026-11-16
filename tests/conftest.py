@@ -1,5 +1,7 @@
 """Shared pytest fixtures. Tests run against a real MongoDB in a throwaway database."""
 
+import io
+import json
 import os
 
 import pytest
@@ -89,3 +91,34 @@ def auth_header():
         return {"Authorization": f"Bearer {response.get_json()['token']}"}
 
     return build
+
+
+@pytest.fixture
+def tokens(client, register, auth_header):
+    """Bearer headers for a Division A user, a Division B user and the super admin."""
+    admin_login = client.post("/api/auth/login", json={"username": "admin", "password": "Admin@12345"})
+    return {
+        "a": auth_header(register(name="Alpha User", email="alpha@example.com", division="Division A")),
+        "b": auth_header(register(name="Bravo User", email="bravo@example.com", division="Division B")),
+        "admin": auth_header(admin_login),
+    }
+
+
+@pytest.fixture
+def upload(client):
+    """POST a file to /api/documents/upload. Returns the response."""
+
+    def do_upload(data, filename="report.pdf", metadata=None, headers=None, title=None, mimetype="application/pdf"):
+        form = {"file": (io.BytesIO(data), filename, mimetype)}
+        if metadata is not None:
+            form["metadata"] = metadata if isinstance(metadata, str) else json.dumps(metadata)
+        if title is not None:
+            form["title"] = title
+        return client.post(
+            "/api/documents/upload",
+            data=form,
+            headers=headers or {},
+            content_type="multipart/form-data",
+        )
+
+    return do_upload
