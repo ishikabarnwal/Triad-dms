@@ -9,3 +9,4 @@ dist/
 .vscode/
 test_report.txt
 test_sample.pdf
+.pytest_cache/
