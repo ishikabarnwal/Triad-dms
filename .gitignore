@@ -8,3 +8,4 @@ dist/
 .DS_Store
 .vscode/
 test_report.txt
+test_sample.pdf
