@@ -140,7 +140,7 @@ def seed_admin(db, config):
         "name": config["ADMIN_NAME"],
         "email": email,
         "username": config["ADMIN_USERNAME"] or None,
-        "password_hash": bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
+        "password_hash": bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=config["BCRYPT_ROUNDS"])).decode(),
         "division": config["ADMIN_DIVISION"],
         "role": "admin",
         "created_at": utcnow(),
