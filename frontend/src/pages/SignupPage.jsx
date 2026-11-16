@@ -1,10 +1,11 @@
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert, Button, Form, Spinner } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { getDivisions } from "../api/auth";
 import { errorInfo } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
 import AuthLayout from "./AuthLayout";
 
 const EMPTY = { name: "", email: "", username: "", password: "", division: "" };
@@ -18,7 +19,6 @@ const FIELD_FOR_ERROR = {
 
 export default function SignupPage() {
   const { register } = useAuth();
-  const toast = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY);
   const [divisions, setDivisions] = useState([]);
@@ -46,8 +46,8 @@ export default function SignupPage() {
     const body = Object.fromEntries(Object.entries(form).filter(([, value]) => value.trim() !== ""));
     try {
       const user = await register(body);
-      toast.success(`Welcome, ${user.name}`, `You're signed in to ${user.division}.`);
-      navigate("/", { replace: true });
+      toast.success(`Welcome, ${user.name}`, { description: `You're signed in to ${user.division}.` });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       const info = errorInfo(err);
       const field = FIELD_FOR_ERROR[info.code];
@@ -72,7 +72,7 @@ export default function SignupPage() {
 
   return (
     <AuthLayout>
-      <h2 className="h4 mb-1">Create your account</h2>
+      <h2 className="heading-tight mb-1">Create your account</h2>
       <p className="text-muted-soft mb-4">You&apos;ll see documents from the division you join.</p>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -102,7 +102,14 @@ export default function SignupPage() {
         </Form.Group>
 
         <Button type="submit" className="w-100" disabled={submitting}>
-          {submitting ? <Spinner size="sm" animation="border" /> : "Create account"}
+          {submitting ? (
+            <Spinner size="sm" animation="border" />
+          ) : (
+            <>
+              Create account
+              <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
+            </>
+          )}
         </Button>
       </Form>
 

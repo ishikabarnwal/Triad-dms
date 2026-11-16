@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Alert, Button, Form, Spinner } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -22,7 +23,7 @@ export default function LoginPage() {
     setError("");
     try {
       await login(identifier.trim(), password);
-      navigate(location.state?.from?.pathname || "/", { replace: true });
+      navigate(location.state?.from?.pathname || "/dashboard", { replace: true });
     } catch (err) {
       setError(errorInfo(err).message);
       setSubmitting(false);
@@ -31,7 +32,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <h2 className="h4 mb-1">Welcome back</h2>
+      <h2 className="heading-tight mb-1">Welcome back</h2>
       <p className="text-muted-soft mb-4">Sign in to your division&apos;s workspace.</p>
 
       {expired && !error && <Alert variant="secondary">Your session has ended. Please sign in again.</Alert>}
@@ -59,7 +60,14 @@ export default function LoginPage() {
           />
         </Form.Group>
         <Button type="submit" className="w-100" disabled={submitting || !identifier || !password}>
-          {submitting ? <Spinner size="sm" animation="border" /> : "Sign in"}
+          {submitting ? (
+            <Spinner size="sm" animation="border" />
+          ) : (
+            <>
+              Sign in
+              <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
+            </>
+          )}
         </Button>
       </Form>
 
