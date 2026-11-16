@@ -10,7 +10,6 @@ __pycache__
 .pytest_cache
 .vscode
 frontend
-tests
 test_api.py
 test_sample.pdf
 test_report.txt
