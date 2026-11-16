@@ -1,6 +1,7 @@
-"""Pydantic models for validating request bodies."""
+"""Pydantic models for validating request bodies and query strings."""
 
-from typing import Annotated
+import json
+from typing import Annotated, Any, Literal
 
 from flask import current_app
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator, model_validator
@@ -71,3 +72,50 @@ class LoginRequest(BaseModel):
         """The identifier to look the user up by, lowercased."""
         value = self.email or self.username or self.identifier or ""
         return value.lower()
+
+
+class UploadForm(BaseModel):
+    """Non-file fields of POST /api/documents/upload. `metadata` arrives as a JSON string."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    title: Annotated[Trimmed, Field(max_length=200)] | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("metadata", mode="before")
+    @classmethod
+    def parse_metadata_json(cls, value):
+        """Decode the metadata JSON string; a missing or blank value means no metadata."""
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return {}
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise ValueError("metadata must be a valid JSON string.") from exc
+        if not isinstance(value, dict):
+            raise ValueError("metadata must be a JSON object.")
+        return value
+
+
+class ListQuery(BaseModel):
+    """Reserved query params of GET /api/documents. Every other param is a metadata filter."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    scope: Literal["division", "all"] = "division"
+    page: int = Field(1, ge=1)
+    limit: int = Field(20, ge=1, le=100)
+    sort: Trimmed = "created_at"
+    order: Literal["asc", "desc"] = "desc"
+    q: Annotated[Trimmed, Field(max_length=200)] | None = None
+
+    @field_validator("scope", "order", mode="before")
+    @classmethod
+    def lowercase(cls, value):
+        """Accept ?scope=ALL and ?order=ASC."""
+        return value.lower() if isinstance(value, str) else value
+
+
+# One source of truth: these names can't be metadata filters or field keys.
+RESERVED_QUERY_PARAMS = frozenset(ListQuery.model_fields)
