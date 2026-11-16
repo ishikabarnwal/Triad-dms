@@ -1,8 +1,10 @@
-import { Badge, Table } from "react-bootstrap";
+import { motion } from "framer-motion";
+import { Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { columnFields } from "../utils/fields";
 import { formatDate } from "../utils/format";
-import { AccessBadge, DivisionBadge, FileIcon, OcrBadge } from "./Badges";
+import { AccessBadge, DivisionBadge, FileIcon, OcrBadge, Pill } from "./Badges";
+import { staggerItem } from "./motion";
 
 const SKELETON_ROWS = 6;
 
@@ -15,11 +17,7 @@ function MetadataValue({ field, value }) {
     return <span className="text-nowrap">{formatDate(value)}</span>;
   }
   if (field.type === "select") {
-    return (
-      <Badge bg="" pill className="badge-value">
-        {String(value)}
-      </Badge>
-    );
+    return <Pill label={String(value)} tone="pill-outline" />;
   }
   return <span>{String(value)}</span>;
 }
@@ -65,9 +63,10 @@ export default function DocumentsTable({ documents, fields, loading }) {
           {loading ? (
             <SkeletonRows columns={columnCount} />
           ) : (
-            documents.map((doc) => (
-              <tr
+            documents.map((doc, index) => (
+              <motion.tr
                 key={doc.id}
+                {...staggerItem(index)}
                 tabIndex={0}
                 onClick={() => open(doc.id)}
                 onKeyDown={(event) => event.key === "Enter" && open(doc.id)}
@@ -101,7 +100,7 @@ export default function DocumentsTable({ documents, fields, loading }) {
                 <td>
                   <AccessBadge status={doc.access_status} />
                 </td>
-              </tr>
+              </motion.tr>
             ))
           )}
         </tbody>

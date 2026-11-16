@@ -1,5 +1,6 @@
+import { ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Col, Collapse, Form, Row } from "react-bootstrap";
+import { Button, Col, Collapse, Form, Row } from "react-bootstrap";
 import { inputType } from "../utils/fields";
 
 const TYPING_DELAY_MS = 400;
@@ -77,16 +78,12 @@ export default function FilterBar({ fields, values, onChange, onClear, loading }
         aria-expanded={open}
         aria-controls="filter-fields"
       >
-        <span className="fw-medium">
-          <i className="bi bi-funnel me-2 text-primary" aria-hidden="true" />
+        <span className="fw-medium d-inline-flex align-items-center gap-2">
+          <Filter size={16} className="text-primary" aria-hidden="true" />
           Filters
-          {activeCount > 0 && (
-            <Badge pill bg="primary" className="ms-2">
-              {activeCount}
-            </Badge>
-          )}
+          {activeCount > 0 && <span className="pill pill-solid">{activeCount}</span>}
         </span>
-        <i className={`bi ${open ? "bi-chevron-up" : "bi-chevron-down"}`} aria-hidden="true" />
+        {open ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}
       </Button>
       <Collapse in={open}>
         <div id="filter-fields" className="filter-fields">
@@ -104,8 +101,8 @@ export default function FilterBar({ fields, values, onChange, onClear, loading }
               </Col>
             ))}
             <Col xs="auto">
-              <Button variant="link" size="sm" className="px-0" onClick={onClear} disabled={!activeCount}>
-                <i className="bi bi-x-circle me-1" aria-hidden="true" />
+              <Button variant="light" size="sm" onClick={onClear} disabled={!activeCount}>
+                <X size={14} aria-hidden="true" />
                 Clear filters
               </Button>
             </Col>

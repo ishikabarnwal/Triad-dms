@@ -1,10 +1,11 @@
+import { ArrowRight, CloudUpload, FileImage, FileText, ScanText, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert, Button, Col, Form, Modal, ProgressBar, Row } from "react-bootstrap";
 import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
 import { errorInfo } from "../api/client";
 import { uploadDocument } from "../api/documents";
 import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
 import { inputType, isDivisionField } from "../utils/fields";
 import { fileStem, formatBytes } from "../utils/format";
 
@@ -93,7 +94,6 @@ function ocrMessage(document) {
 
 export default function UploadModal({ show, fields, onHide, onUploaded }) {
   const { user, isAdmin } = useAuth();
-  const toast = useToast();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [values, setValues] = useState({});
@@ -160,11 +160,8 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
         }
       });
       const document = response.data;
-      toast.notify({
-        variant: document.ocr_status === "failed" ? "danger" : "success",
-        title: `"${document.title}" uploaded`,
-        message: ocrMessage(document),
-      });
+      const notify = document.ocr_status === "failed" ? toast.error : toast.success;
+      notify(`"${document.title}" uploaded`, { description: ocrMessage(document) });
       onUploaded(document);
       onHide();
     } catch (error) {
@@ -181,7 +178,7 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
     <Modal show={show} onHide={busy ? undefined : onHide} size="lg" centered backdrop={busy ? "static" : true}>
       <Form onSubmit={submit} noValidate>
         <Modal.Header closeButton={!busy}>
-          <Modal.Title as="h2" className="h5">
+          <Modal.Title as="h2" className="h4 heading-tight">
             Upload document
           </Modal.Title>
         </Modal.Header>
@@ -189,7 +186,9 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
         <Modal.Body className="px-4">
           {phase === "scanning" ? (
             <div className="scan-state">
-              <i className="bi bi-upc-scan scan-icon" aria-hidden="true" />
+              <span className="icon-tile" style={{ width: "3.75rem", height: "3.75rem" }}>
+                <ScanText size={28} aria-hidden="true" />
+              </span>
               <h3 className="h6 mt-3 mb-1">Scanning document (OCR)…</h3>
               <p className="text-muted-soft small mb-0">Extracting text so it can be searched. This can take a few seconds.</p>
             </div>
@@ -199,8 +198,8 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
 
               {file ? (
                 <div className="selected-file mb-4">
-                  <span className="file-icon">
-                    <i className={`bi ${file.type === "application/pdf" ? "bi-file-earmark-pdf" : "bi-file-earmark-image"}`} />
+                  <span className="icon-tile sm">
+                    {file.type === "application/pdf" ? <FileText size={18} aria-hidden="true" /> : <FileImage size={18} aria-hidden="true" />}
                   </span>
                   <div className="flex-grow-1" style={{ minWidth: 0 }}>
                     <div className="fw-medium text-truncate">{file.name}</div>
@@ -208,7 +207,7 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
                   </div>
                   {!busy && (
                     <Button variant="link" className="text-muted-soft" onClick={() => setFile(null)} aria-label="Remove file">
-                      <i className="bi bi-x-lg" />
+                      <X size={18} aria-hidden="true" />
                     </Button>
                   )}
                 </div>
@@ -219,13 +218,13 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
                   })}
                 >
                   <input {...getInputProps()} />
-                  <i className="bi bi-cloud-arrow-up dropzone-icon" aria-hidden="true" />
+                  <CloudUpload size={34} className="text-primary" aria-hidden="true" />
                   <div className="fw-medium mt-2">{isDragActive ? "Drop the file here" : "Drag a file here, or click to browse"}</div>
                   <div className="small text-muted-soft mt-1">PDF, PNG, JPG, TIFF, BMP or WEBP · up to 25 MB</div>
                 </div>
               )}
 
-              {phase === "uploading" && <ProgressBar now={progress} label={`${progress}%`} className="mb-4" animated />}
+              {phase === "uploading" && <ProgressBar now={progress} label={`${progress}%`} className="mb-4" />}
 
               <Form.Group className="mb-4" controlId="upload-title">
                 <Form.Label>Title</Form.Label>
@@ -264,6 +263,7 @@ export default function UploadModal({ show, fields, onHide, onUploaded }) {
           </Button>
           <Button type="submit" variant="primary" disabled={busy || !file}>
             {busy ? "Uploading…" : "Upload"}
+            {!busy && <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />}
           </Button>
         </Modal.Footer>
       </Form>

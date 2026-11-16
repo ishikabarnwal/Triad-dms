@@ -24,7 +24,7 @@ export default function ProtectedRoute({ adminOnly = false }) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return <Outlet />;
 }
@@ -35,5 +35,5 @@ export function GuestRoute() {
   if (!ready) {
     return <FullPageSpinner />;
   }
-  return user ? <Navigate to="/" replace /> : <Outlet />;
+  return user ? <Navigate to="/dashboard" replace /> : <Outlet />;
 }

@@ -1,19 +1,26 @@
-/** One number on the dashboard. Shows a skeleton while loading. */
-export default function StatCard({ icon, label, value, hint, loading }) {
+import { useReducedMotion } from "framer-motion";
+import CountUp from "react-countup";
+import { LiftCard } from "./motion";
+
+/** One number on the dashboard, counting up from zero. `dark` makes it the plum accent card. */
+export default function StatCard({ Icon, label, value, hint, loading, dark = false }) {
+  const reduced = useReducedMotion();
   return (
-    <div className="surface stat-card d-flex align-items-center gap-3">
-      <span className="stat-icon">
-        <i className={`bi ${icon}`} aria-hidden="true" />
+    <LiftCard className={`${dark ? "surface-dark" : "surface"} stat-card d-flex flex-column gap-3`}>
+      <span className={`icon-tile ${dark ? "on-dark" : ""}`}>
+        <Icon size={20} aria-hidden="true" />
       </span>
-      <div style={{ minWidth: 0 }}>
+      <div>
         {loading ? (
-          <span className="skeleton" style={{ width: "3rem", height: "1.6rem" }} />
+          <span className="skeleton" style={{ width: "3rem", height: "1.8rem" }} />
         ) : (
-          <div className="stat-value">{value}</div>
+          <div className="stat-value">
+            <CountUp end={value} duration={reduced ? 0 : 1.2} preserveValue />
+          </div>
         )}
-        <div className="stat-label">{label}</div>
+        <div className="stat-label mt-1">{label}</div>
         {hint && !loading && <div className="stat-hint">{hint}</div>}
       </div>
-    </div>
+    </LiftCard>
   );
 }
