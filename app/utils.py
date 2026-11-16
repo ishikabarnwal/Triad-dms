@@ -1,5 +1,6 @@
 """Shared helpers: API errors, request parsing, passwords, JWT auth and audit logging."""
 
+import re
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache, wraps
 
@@ -12,6 +13,9 @@ from app.db import get_db
 from app.models import parse_object_id
 
 JWT_ALGORITHM = "HS256"
+
+# Access statuses that allow downloading/previewing a document's file and reading its OCR text.
+GRANTING_STATUSES = frozenset({"owner", "admin", "approved"})
 
 
 class ApiError(Exception):
@@ -125,6 +129,87 @@ def login_required(view):
         return view(*args, **kwargs)
 
     return wrapper
+
+
+def optional_user():
+    """The user for the request's bearer token, or None if no token was sent.
+
+    A token that is sent but invalid is still rejected, rather than silently
+    treating the request as anonymous.
+    """
+    token = bearer_token()
+    return user_from_token(token) if token else None
+
+
+def is_admin(user):
+    """True for the super admin."""
+    return bool(user) and user.get("role") == "admin"
+
+
+def find_division(name_or_code):
+    """Find a division by exact name or code, ignoring case."""
+    pattern = re.compile(f"^{re.escape(str(name_or_code).strip())}$", re.IGNORECASE)
+    return get_db().divisions.find_one({"$or": [{"name": pattern}, {"code": pattern}]})
+
+
+def division_names():
+    """Names of every division, sorted."""
+    return sorted(d["name"] for d in get_db().divisions.find({}, {"name": 1}))
+
+
+def request_state(access_request, now=None):
+    """Status of an access request, with approvals past their expiry reported as "expired"."""
+    status = access_request["status"]
+    expires_at = access_request.get("expires_at")
+    if status == "approved" and expires_at and expires_at <= (now or utcnow()):
+        return "expired"
+    return status
+
+
+def latest_requests(user, document_ids):
+    """Map document id -> the user's most recent access request for it."""
+    cursor = get_db().access_requests.find(
+        {"requester_id": user["_id"], "document_id": {"$in": list(document_ids)}}
+    ).sort("created_at", -1)
+    latest = {}
+    for access_request in cursor:
+        latest.setdefault(access_request["document_id"], access_request)
+    return latest
+
+
+def access_status(user, document, latest_request=None):
+    """How `user` may access `document`: owner, admin, approved, pending, rejected, expired, revoked or none."""
+    if document.get("division") == user.get("division"):
+        return "owner"
+    if is_admin(user):
+        return "admin"
+    if latest_request:
+        return request_state(latest_request)
+    return "none"
+
+
+def document_access(user, document):
+    """Return (status, latest_request) for one document."""
+    latest_request = latest_requests(user, [document["_id"]]).get(document["_id"])
+    return access_status(user, document, latest_request), latest_request
+
+
+def can_download(status):
+    """Whether an access status allows the file and OCR text to be read."""
+    return status in GRANTING_STATUSES
+
+
+def approved_document_ids(user):
+    """Ids of documents from other divisions the user currently has approved, unexpired access to."""
+    now = utcnow()
+    return get_db().access_requests.distinct(
+        "document_id",
+        {
+            "requester_id": user["_id"],
+            "status": "approved",
+            "$or": [{"expires_at": None}, {"expires_at": {"$gt": now}}],
+        },
+    )
 
 
 def client_ip():

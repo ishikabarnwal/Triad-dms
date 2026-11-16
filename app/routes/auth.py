@@ -1,7 +1,5 @@
 """Auth endpoints: register, login and the current user."""
 
-import re
-
 from flask import Blueprint, current_app, g, jsonify
 from pymongo.errors import DuplicateKeyError
 
@@ -12,6 +10,8 @@ from app.schemas import LoginRequest, RegisterRequest
 from app.utils import (
     ApiError,
     create_token,
+    division_names,
+    find_division,
     hash_password,
     login_required,
     read_body,
@@ -37,12 +37,6 @@ def auth_response(user, status):
         "user": serialize_user(user),
     }
     return jsonify(body), status
-
-
-def find_division(name_or_code):
-    """Find a division by exact name or code, ignoring case."""
-    pattern = re.compile(f"^{re.escape(name_or_code)}$", re.IGNORECASE)
-    return get_db().divisions.find_one({"$or": [{"name": pattern}, {"code": pattern}]})
 
 
 def ensure_identity_free(email, username):
@@ -72,8 +66,7 @@ def register():
 
     division = find_division(data.division)
     if not division:
-        names = sorted(d["name"] for d in get_db().divisions.find({}, {"name": 1}))
-        raise ApiError(400, "unknown_division", f"Unknown division '{data.division}'.", divisions=names)
+        raise ApiError(400, "unknown_division", f"Unknown division '{data.division}'.", divisions=division_names())
 
     ensure_identity_free(data.email, data.username)
     user = {
