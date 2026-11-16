@@ -1,9 +1,10 @@
-import { motion, useReducedMotion } from "framer-motion";
+import { animate, motion, useInView, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 const EASE = [0.22, 1, 0.36, 1];
 
 /** Fades and lifts its children into view the first time they scroll on screen. */
-export function Reveal({ children, delay = 0, y = 24, className, style, as = "div" }) {
+export function Reveal({ children, delay = 0, y = 20, className, style, as = "div" }) {
   const Component = motion[as];
   return (
     <Component
@@ -12,19 +13,10 @@ export function Reveal({ children, delay = 0, y = 24, className, style, as = "di
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, delay, ease: EASE }}
+      transition={{ duration: 0.55, delay, ease: EASE }}
     >
       {children}
     </Component>
-  );
-}
-
-/** A card that lifts slightly on hover. */
-export function LiftCard({ children, className, ...props }) {
-  return (
-    <motion.div className={className} whileHover={{ y: -4 }} transition={{ duration: 0.2, ease: EASE }} {...props}>
-      {children}
-    </motion.div>
   );
 }
 
@@ -32,17 +24,17 @@ export function LiftCard({ children, className, ...props }) {
 export function PageTransition({ children }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.28, ease: EASE }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.25, ease: EASE }}
     >
       {children}
     </motion.div>
   );
 }
 
-/** Gentle up-and-down drift for the landing page's floating cards. Still when motion is reduced. */
+/** Gentle up-and-down drift. Still when the user prefers reduced motion. */
 export function Float({ children, className, duration = 6, distance = 8, delay = 0 }) {
   const reduced = useReducedMotion();
   return (
@@ -59,8 +51,39 @@ export function Float({ children, className, duration = 6, distance = 8, delay =
 /** Motion props for staggered list items: pass the item's index. */
 export function staggerItem(index, step = 0.035) {
   return {
-    initial: { opacity: 0, y: 8 },
+    initial: { opacity: 0, y: 6 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.3, delay: Math.min(index * step, 0.4), ease: EASE },
+    transition: { duration: 0.28, delay: Math.min(index * step, 0.4), ease: EASE },
   };
+}
+
+/** A number that counts up from 0 the first time it scrolls into view. */
+export function CountUp({ value, suffix = "", duration = 1.2, className }) {
+  const reduced = useReducedMotion();
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const [shown, setShown] = useState(reduced ? value : 0);
+
+  useEffect(() => {
+    if (reduced) {
+      setShown(value);
+      return undefined;
+    }
+    if (!inView) {
+      return undefined;
+    }
+    const controls = animate(0, value, {
+      duration,
+      ease: EASE,
+      onUpdate: (latest) => setShown(Math.round(latest)),
+    });
+    return () => controls.stop();
+  }, [value, inView, reduced, duration]);
+
+  return (
+    <span ref={ref} className={className}>
+      {shown.toLocaleString("en-IN")}
+      {suffix}
+    </span>
+  );
 }

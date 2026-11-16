@@ -1,13 +1,11 @@
-import { Spinner } from "react-bootstrap";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export function FullPageSpinner() {
   return (
-    <div className="full-page-center">
-      <Spinner animation="border" variant="primary" role="status">
-        <span className="visually-hidden">Loading…</span>
-      </Spinner>
+    <div className="flex min-h-dvh items-center justify-center bg-lavender" role="status">
+      <span className="size-8 animate-spin rounded-full border-2 border-line border-t-primary" />
+      <span className="sr-only">Loading…</span>
     </div>
   );
 }

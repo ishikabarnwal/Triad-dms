@@ -1,26 +1,24 @@
-import { useReducedMotion } from "framer-motion";
-import CountUp from "react-countup";
-import { LiftCard } from "./motion";
+import { cn } from "@/lib/utils";
+import { CountUp } from "./motion";
+import { Skeleton } from "./ui/skeleton";
 
-/** One number on the dashboard, counting up from zero. `dark` makes it the plum accent card. */
-export default function StatCard({ Icon, label, value, hint, loading, dark = false }) {
-  const reduced = useReducedMotion();
+/** One dashboard number. `dark` makes it the plum accent card. */
+export default function StatCard({ Icon, code, label, value, hint, loading, dark = false }) {
   return (
-    <LiftCard className={`${dark ? "surface-dark" : "surface"} stat-card d-flex flex-column gap-3`}>
-      <span className={`icon-tile ${dark ? "on-dark" : ""}`}>
-        <Icon size={20} aria-hidden="true" />
-      </span>
+    <div className={cn(dark ? "card-dark" : "card lift", "flex h-full flex-col justify-between gap-6 p-5")}>
+      <div className="flex items-center justify-between">
+        <span className={cn("label-mono", dark ? "text-white/55" : "text-muted")}>{code}</span>
+        <Icon className={cn("size-4", dark ? "text-white/70" : "text-primary")} aria-hidden="true" />
+      </div>
       <div>
         {loading ? (
-          <span className="skeleton" style={{ width: "3rem", height: "1.8rem" }} />
+          <Skeleton className={cn("h-9 w-14", dark && "bg-white/15")} />
         ) : (
-          <div className="stat-value">
-            <CountUp end={value} duration={reduced ? 0 : 1.2} preserveValue />
-          </div>
+          <CountUp value={value} className={cn("block text-4xl font-semibold tracking-[-0.04em]", dark && "text-white")} />
         )}
-        <div className="stat-label mt-1">{label}</div>
-        {hint && !loading && <div className="stat-hint">{hint}</div>}
+        <div className={cn("mt-1 text-sm", dark ? "text-white/70" : "text-muted")}>{label}</div>
+        {hint && !loading && <div className={cn("text-xs", dark ? "text-white/50" : "text-muted")}>{hint}</div>}
       </div>
-    </LiftCard>
+    </div>
   );
 }
