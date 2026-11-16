@@ -10,11 +10,13 @@ from pymongo import ASCENDING, DESCENDING
 
 from app.db import get_db, get_fs
 from app.files import MIME_TYPES, clean_filename, detect_kind
-from app.metadata import active_fields, division_field, is_blank, metadata_filters, search_blob, validate_metadata
+from app.filters import document_filters
+from app.metadata import active_fields, division_field, is_blank, search_blob, validate_metadata
 from app.models import isoformat, serialize_document
 from app.ocr import extract_text
-from app.schemas import ListQuery, RESERVED_QUERY_PARAMS, UploadForm
+from app.schemas import ListQuery, UploadForm, reserved_args
 from app.utils import (
+    REQUESTABLE_STATUSES,
     ApiError,
     access_status,
     approved_document_ids,
@@ -36,7 +38,6 @@ documents_bp = Blueprint("documents", __name__)
 SORTABLE_COLUMNS = {"created_at", "title", "filename", "size"}
 # Big fields that list responses never need.
 LIST_PROJECTION = {"ocr_text": 0, "search_blob": 0}
-REQUESTABLE_STATUSES = {"none", "rejected", "expired", "revoked"}
 
 
 # ---- upload helpers ----
@@ -121,7 +122,7 @@ def visibility_filter(user):
 
 def list_conditions(query, fields, user):
     """All Mongo conditions for a list request."""
-    conditions = metadata_filters(request.args, fields)
+    conditions = document_filters(query, fields, request.args)
     if query.q:
         pattern = re.compile(re.escape(query.q), re.IGNORECASE)
         conditions.append({"$or": [{"title": pattern}, {"filename": pattern}]})
@@ -271,10 +272,11 @@ def list_documents():
 
     scope=division (default): my division's documents plus ones I have approved access to.
     scope=all: every document's title and metadata, flagged with can_download and access_status.
-    Any query param that isn't reserved filters on metadata, e.g. ?Report Type=Financial.
+    Also filters by division, date_from, date_to and ocr_status. Any other query param
+    filters on metadata, e.g. ?Report Type=Financial.
     """
     user = g.current_user
-    query = ListQuery.model_validate({key: request.args[key] for key in RESERVED_QUERY_PARAMS if key in request.args})
+    query = ListQuery.model_validate(reserved_args(request.args))
     fields = active_fields()
     sort = sort_spec(query, fields)
 

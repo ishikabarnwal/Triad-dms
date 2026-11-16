@@ -22,6 +22,11 @@ def active_fields():
     return list(get_db().metadata_fields.find({"active": True}).sort("order", 1))
 
 
+def usage_count(key):
+    """How many documents have a value for this metadata key."""
+    return get_db().documents.count_documents({f"metadata.{key}": {"$exists": True}})
+
+
 def division_field(fields):
     """The field whose options come from the divisions collection, if any."""
     return next((field for field in fields if field.get("source") == "divisions"), None)

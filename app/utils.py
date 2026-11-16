@@ -16,6 +16,8 @@ JWT_ALGORITHM = "HS256"
 
 # Access statuses that allow downloading/previewing a document's file and reading its OCR text.
 GRANTING_STATUSES = frozenset({"owner", "admin", "approved"})
+# Access statuses from which the user may send a (new) access request.
+REQUESTABLE_STATUSES = frozenset({"none", "rejected", "expired", "revoked"})
 
 
 class ApiError(Exception):
@@ -130,6 +132,18 @@ def login_required(view):
         return view(*args, **kwargs)
 
     return wrapper
+
+
+def admin_required(view):
+    """Require a logged-in super admin. Other users get 403."""
+
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not is_admin(g.current_user):
+            raise ApiError(403, "admin_only", "Only the system administrator can do this.")
+        return view(*args, **kwargs)
+
+    return login_required(wrapper)
 
 
 def optional_user():
