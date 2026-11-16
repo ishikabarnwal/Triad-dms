@@ -1,0 +1,212 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/*
+ * Triad DMS design tokens. These are the only colours that exist: Tailwind's default
+ * palette is reset, so a stray "bg-green-500" simply won't compile into anything.
+ * Solid colours only: no gradients, no glows.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-primary: #605be5;
+  --color-primary-hover: #4f49d6;
+  --color-plum: #2a0831;
+  --color-plum-hover: #3a1043;
+  --color-lavender: #f3f2fd;
+  --color-ink: #0a0a0a;
+  --color-muted: #6b6b80;
+  --color-line: #e7e5f5;
+  --color-danger: #dc2626;
+
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --radius-card: 1.25rem;
+  --radius-panel: 1.5rem;
+
+  --shadow-soft: 0 1px 2px rgb(42 8 49 / 0.04), 0 6px 20px rgb(42 8 49 / 0.04);
+  --shadow-lift: 0 2px 4px rgb(42 8 49 / 0.04), 0 16px 36px rgb(42 8 49 / 0.09);
+  --shadow-pop: 0 24px 64px rgb(42 8 49 / 0.18);
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-scan: scan 1.6s ease-in-out infinite;
+  --animate-blink: blink 1s steps(1) infinite;
+  --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-dialog-in: dialog-in 0.18s ease-out;
+  --animate-sheet-in: sheet-in 0.22s ease-out;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes scan {
+    0%,
+    100% {
+      top: 8%;
+    }
+    50% {
+      top: 88%;
+    }
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Uses the standalone scale property so it doesn't fight the centering transform. */
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      translate: -100% 0;
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+/* The upload drop zone's dashed border marches while a file is dragged over it. */
+@keyframes march {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-lavender font-sans text-ink antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background: rgb(96 91 229 / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  mark {
+    @apply rounded-sm px-0.5 text-ink;
+    background: rgb(96 91 229 / 0.16);
+  }
+
+  /* Native number/date inputs keep their own controls; this just aligns them with the theme. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+  }
+}
+
+/* Small mono uppercase label: "[ 01 ] UPLOAD", "DIV-A", "SYS.STATUS". */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Huge, tight headline. */
+@utility headline {
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+@utility card {
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility card-dark {
+  background: var(--color-plum);
+  border: 1px solid var(--color-plum);
+  border-radius: var(--radius-card);
+  color: rgb(255 255 255 / 0.86);
+}
+
+/* Hover lift: rises a little and the border turns indigo. */
+@utility lift {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* Solid dot grid drawn with an SVG tile (no gradient functions). Hero sections only. */
+@utility dot-grid {
+  background-color: var(--color-lavender);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.5' cy='1.5' r='1.1' fill='%23d6d3ee'/%3E%3C/svg%3E");
+  background-size: 22px 22px;
+}
+
+@utility dot-grid-dark {
+  background-color: var(--color-plum);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.5' cy='1.5' r='1.1' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E");
+  background-size: 22px 22px;
+}
+
+/* Sonner toasts in the house style. */
+[data-sonner-toast][data-styled="true"] {
+  font-family: var(--font-sans);
+  border-radius: 1rem;
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
