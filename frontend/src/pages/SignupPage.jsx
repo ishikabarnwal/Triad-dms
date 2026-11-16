@@ -1,12 +1,14 @@
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Alert, Button, Form, Spinner } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getDivisions } from "../api/auth";
-import { errorInfo } from "../api/client";
-import { useAuth } from "../context/AuthContext";
+import { getDivisions } from "@/api/auth";
+import { errorInfo } from "@/api/client";
+import { Button, ButtonArrow } from "@/components/ui/button";
+import { Input, NativeSelect } from "@/components/ui/input";
+import { Field } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 import AuthLayout from "./AuthLayout";
+import { FormAlert } from "./LoginPage";
 
 const EMPTY = { name: "", email: "", username: "", password: "", division: "" };
 
@@ -16,6 +18,13 @@ const FIELD_FOR_ERROR = {
   username_taken: "username",
   unknown_division: "division",
 };
+
+const TEXT_FIELDS = [
+  ["name", "Full name", { autoComplete: "name", autoFocus: true }],
+  ["email", "Email", { type: "email", autoComplete: "email" }],
+  ["username", "Username (optional)", { autoComplete: "username" }],
+  ["password", "Password", { type: "password", autoComplete: "new-password" }],
+];
 
 export default function SignupPage() {
   const { register } = useAuth();
@@ -62,59 +71,53 @@ export default function SignupPage() {
     }
   };
 
-  const textField = (key, label, props = {}) => (
-    <Form.Group className="mb-3" controlId={`signup-${key}`}>
-      <Form.Label>{label}</Form.Label>
-      <Form.Control value={form[key]} onChange={update(key)} isInvalid={Boolean(fieldErrors[key])} {...props} />
-      <Form.Control.Feedback type="invalid">{fieldErrors[key]}</Form.Control.Feedback>
-    </Form.Group>
-  );
-
   return (
     <AuthLayout>
-      <h2 className="heading-tight mb-1">Create your account</h2>
-      <p className="text-muted-soft mb-4">You&apos;ll see documents from the division you join.</p>
+      <div className="label-mono mb-3 text-muted">[ AUTH ] New account</div>
+      <h2 className="text-3xl font-semibold tracking-[-0.04em]">Create your account</h2>
+      <p className="mt-1.5 mb-7 text-sm text-muted">You&apos;ll see documents from the division you join.</p>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {fieldErrors.body && <Alert variant="danger">{fieldErrors.body}</Alert>}
+      {error && <FormAlert>{error}</FormAlert>}
+      {fieldErrors.body && <FormAlert>{fieldErrors.body}</FormAlert>}
 
-      <Form onSubmit={submit} noValidate>
-        {textField("name", "Full name", { autoComplete: "name", autoFocus: true })}
-        {textField("email", "Email", { type: "email", autoComplete: "email" })}
-        {textField("username", "Username (optional)", { autoComplete: "username" })}
-        {textField("password", "Password", { type: "password", autoComplete: "new-password" })}
-
-        <Form.Group className="mb-4" controlId="signup-division">
-          <Form.Label>Division</Form.Label>
-          <Form.Select
+      <form onSubmit={submit} noValidate className="space-y-4">
+        {TEXT_FIELDS.map(([key, label, props]) => (
+          <Field key={key} label={label} htmlFor={`signup-${key}`} error={fieldErrors[key]}>
+            <Input
+              id={`signup-${key}`}
+              value={form[key]}
+              onChange={update(key)}
+              invalid={Boolean(fieldErrors[key])}
+              {...props}
+            />
+          </Field>
+        ))}
+        <Field label="Division" htmlFor="signup-division" error={fieldErrors.division || divisionsError}>
+          <NativeSelect
+            id="signup-division"
             value={form.division}
             onChange={update("division")}
-            isInvalid={Boolean(fieldErrors.division || divisionsError)}
+            invalid={Boolean(fieldErrors.division || divisionsError)}
           >
             <option value="">{divisions.length ? "Choose your division" : "Loading divisions…"}</option>
             {divisions.map((division) => (
               <option key={division.id} value={division.name}>
-                {division.name}
+                {division.code ? `${division.code} — ${division.name}` : division.name}
               </option>
             ))}
-          </Form.Select>
-          <Form.Control.Feedback type="invalid">{fieldErrors.division || divisionsError}</Form.Control.Feedback>
-        </Form.Group>
-
-        <Button type="submit" className="w-100" disabled={submitting}>
-          {submitting ? (
-            <Spinner size="sm" animation="border" />
-          ) : (
-            <>
-              Create account
-              <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
-            </>
-          )}
+          </NativeSelect>
+        </Field>
+        <Button type="submit" className="mt-2 w-full" disabled={submitting}>
+          {submitting ? "Creating account…" : "Create account"}
+          {!submitting && <ButtonArrow />}
         </Button>
-      </Form>
+      </form>
 
-      <p className="text-center text-muted-soft small mt-4 mb-0">
-        Already have an account? <Link to="/login">Sign in</Link>
+      <p className="mt-6 text-center text-sm text-muted">
+        Already have an account?{" "}
+        <Link to="/login" className="font-medium text-primary hover:underline">
+          Sign in
+        </Link>
       </p>
     </AuthLayout>
   );

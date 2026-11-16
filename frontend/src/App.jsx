@@ -26,11 +26,11 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/search" element={<PlaceholderPage title="Search" Icon={Search} />} />
-            <Route path="/access" element={<PlaceholderPage title="Access Requests" Icon={ShieldCheck} />} />
-            <Route path="/documents/:id" element={<PlaceholderPage title="Document" Icon={FileText} />} />
+            <Route path="/search" element={<PlaceholderPage code="[ SEARCH ]" title="Search" Icon={Search} />} />
+            <Route path="/access" element={<PlaceholderPage code="[ ACCESS ]" title="Access requests" Icon={ShieldCheck} />} />
+            <Route path="/documents/:id" element={<PlaceholderPage code="[ DOCUMENT ]" title="Document" Icon={FileText} />} />
             <Route element={<ProtectedRoute adminOnly />}>
-              <Route path="/settings" element={<PlaceholderPage title="Settings" Icon={Settings} />} />
+              <Route path="/settings" element={<PlaceholderPage code="[ ADMIN ]" title="Settings" Icon={Settings} />} />
             </Route>
           </Route>
         </Route>
