@@ -14,7 +14,12 @@ TEST_CONFIG = {
     "MONGO_URI": os.getenv("TEST_MONGO_URI", "mongodb://localhost:27017"),
     "MONGO_DB": TEST_DB,
     "JWT_SECRET": "test-secret-not-for-real-use",
+    "JWT_EXPIRES_MINUTES": 60,
+    # Low cost keeps the suite fast; production uses the real default.
+    "BCRYPT_ROUNDS": 4,
+    "PASSWORD_MIN_LENGTH": 6,
     "RATELIMIT_STORAGE_URI": "memory://",
+    "LOGIN_RATE_LIMIT": "100 per minute",
     "ADMIN_NAME": "Test Admin",
     "ADMIN_USERNAME": "admin",
     "ADMIN_EMAIL": "admin@example.com",
@@ -24,14 +29,26 @@ TEST_CONFIG = {
 
 
 @pytest.fixture
-def app():
-    """A seeded app backed by an empty test database that is dropped afterwards."""
-    app = create_app(TEST_CONFIG)
-    client = app.extensions["mongo_client"]
-    client.drop_database(TEST_DB)
-    run_seed(app.extensions["mongo_db"], app.config)
-    yield app
-    client.drop_database(TEST_DB)
+def make_app():
+    """Factory for seeded apps on an empty test database, with optional config overrides."""
+    created = []
+
+    def factory(**overrides):
+        app = create_app({**TEST_CONFIG, **overrides})
+        app.extensions["mongo_client"].drop_database(TEST_DB)
+        run_seed(app.extensions["mongo_db"], app.config)
+        created.append(app)
+        return app
+
+    yield factory
+    for app in created:
+        app.extensions["mongo_client"].drop_database(TEST_DB)
+
+
+@pytest.fixture
+def app(make_app):
+    """A seeded app with the default test config."""
+    return make_app()
 
 
 @pytest.fixture
@@ -44,3 +61,31 @@ def db(app):
 def client(app):
     """Flask test client."""
     return app.test_client()
+
+
+@pytest.fixture
+def register(client):
+    """Register a user, filling in sensible defaults. Returns the response."""
+
+    def do_register(**fields):
+        body = {
+            "name": "Asha Verma",
+            "email": "asha@example.com",
+            "password": "secret123",
+            "division": "Division A",
+            **fields,
+        }
+        body = {key: value for key, value in body.items() if value is not None}
+        return client.post("/api/auth/register", json=body)
+
+    return do_register
+
+
+@pytest.fixture
+def auth_header():
+    """Build an Authorization header from a login/register response."""
+
+    def build(response):
+        return {"Authorization": f"Bearer {response.get_json()['token']}"}
+
+    return build
