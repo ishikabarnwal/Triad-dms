@@ -21,9 +21,10 @@ GRANTING_STATUSES = frozenset({"owner", "admin", "approved"})
 class ApiError(Exception):
     """An error that becomes a {error, message} JSON response with the given status."""
 
-    def __init__(self, status, code, message, **extra):
+    # Named http_status so `status=` stays free for response fields like an access request's status.
+    def __init__(self, http_status, code, message, **extra):
         super().__init__(message)
-        self.status = status
+        self.http_status = http_status
         self.code = code
         self.message = message
         self.extra = extra
@@ -157,6 +158,15 @@ def division_names():
     return sorted(d["name"] for d in get_db().divisions.find({}, {"name": 1}))
 
 
+def get_document_or_404(doc_id, projection=None):
+    """Load a document by id or raise 404."""
+    object_id = parse_object_id(doc_id)
+    document = get_db().documents.find_one({"_id": object_id}, projection) if object_id else None
+    if not document:
+        raise ApiError(404, "document_not_found", "Document not found.")
+    return document
+
+
 def request_state(access_request, now=None):
     """Status of an access request, with approvals past their expiry reported as "expired"."""
     status = access_request["status"]
@@ -164,6 +174,16 @@ def request_state(access_request, now=None):
     if status == "approved" and expires_at and expires_at <= (now or utcnow()):
         return "expired"
     return status
+
+
+def active_approval_condition(now=None):
+    """Mongo condition for approved requests that haven't expired."""
+    return {"status": "approved", "$or": [{"expires_at": None}, {"expires_at": {"$gt": now or utcnow()}}]}
+
+
+def can_decide(user, access_request):
+    """Whether the user may approve, reject or revoke a request: owning division or super admin."""
+    return is_admin(user) or user.get("division") == access_request["owner_division"]
 
 
 def latest_requests(user, document_ids):
@@ -201,14 +221,9 @@ def can_download(status):
 
 def approved_document_ids(user):
     """Ids of documents from other divisions the user currently has approved, unexpired access to."""
-    now = utcnow()
     return get_db().access_requests.distinct(
         "document_id",
-        {
-            "requester_id": user["_id"],
-            "status": "approved",
-            "$or": [{"expires_at": None}, {"expires_at": {"$gt": now}}],
-        },
+        {"requester_id": user["_id"], **active_approval_condition()},
     )
 
 

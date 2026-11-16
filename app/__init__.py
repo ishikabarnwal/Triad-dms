@@ -9,6 +9,7 @@ from werkzeug.exceptions import HTTPException
 from app.config import Config
 from app.db import init_db
 from app.extensions import limiter
+from app.routes.access import access_bp
 from app.routes.auth import auth_bp
 from app.routes.documents import documents_bp
 from app.routes.health import health_bp
@@ -44,6 +45,7 @@ def create_app(overrides=None):
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
+    app.register_blueprint(access_bp, url_prefix="/api/access")
     register_error_handlers(app)
     return app
 
@@ -75,7 +77,7 @@ def register_error_handlers(app):
     @app.errorhandler(ApiError)
     def handle_api_error(exc):
         """Return errors raised by our own code."""
-        return jsonify(exc.to_dict()), exc.status
+        return jsonify(exc.to_dict()), exc.http_status
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(exc):

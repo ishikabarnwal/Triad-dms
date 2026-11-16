@@ -11,7 +11,7 @@ from pymongo import ASCENDING, DESCENDING
 from app.db import get_db, get_fs
 from app.files import MIME_TYPES, clean_filename, detect_kind
 from app.metadata import active_fields, division_field, is_blank, metadata_filters, search_blob, validate_metadata
-from app.models import isoformat, parse_object_id, serialize_document
+from app.models import isoformat, serialize_document
 from app.ocr import extract_text
 from app.schemas import ListQuery, RESERVED_QUERY_PARAMS, UploadForm
 from app.utils import (
@@ -22,6 +22,7 @@ from app.utils import (
     division_names,
     document_access,
     find_division,
+    get_document_or_404,
     is_admin,
     latest_requests,
     login_required,
@@ -98,15 +99,6 @@ def store_file(filename, data, kind, division):
 
 
 # ---- read helpers ----
-
-def get_document_or_404(doc_id):
-    """Load a document by id or raise 404."""
-    object_id = parse_object_id(doc_id)
-    document = get_db().documents.find_one({"_id": object_id}) if object_id else None
-    if not document:
-        raise ApiError(404, "document_not_found", "Document not found.")
-    return document
-
 
 def sort_spec(query, fields):
     """Translate ?sort=&order= into a Mongo sort; metadata keys sort by their value."""
