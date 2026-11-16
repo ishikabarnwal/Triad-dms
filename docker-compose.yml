@@ -1,0 +1,50 @@
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    # Bound to localhost only, so the host can run the pytest suite without exposing the database.
+    ports:
+      - "127.0.0.1:${MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    build: .
+    restart: unless-stopped
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: ${MONGO_DB:-triad_dms}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-before-deploying}
+      JWT_EXPIRES_MINUTES: ${JWT_EXPIRES_MINUTES:-480}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      ALLOW_ANONYMOUS_UPLOAD: ${ALLOW_ANONYMOUS_UPLOAD:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      ADMIN_NAME: ${ADMIN_NAME:-Super Admin}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@12345}
+      ADMIN_DIVISION: ${ADMIN_DIVISION:-Headquarters}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10 per minute}
+      RATELIMIT_STORAGE_URI: mongodb://mongo:27017
+      SEMANTIC_SEARCH_ENABLED: ${SEMANTIC_SEARCH_ENABLED:-false}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  mongo_data:
