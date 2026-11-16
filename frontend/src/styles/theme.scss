@@ -1,74 +1,389 @@
 // Triad DMS theme. Brand colours live here and only here.
-// Indigo for every interactive element, deep plum for the app chrome, greys for
-// everything else, and Bootstrap's red only for errors and destructive actions.
+// Solid colours only: indigo for interaction, deep plum for dark surfaces, lavender
+// for the page, white cards, and Bootstrap's red only for errors.
 
 $primary: #605be5;
 $plum: #2a0831;
-$ink: #222222;
+$lavender: #f3f2fd;
+$ink: #111111;
+$muted: #6b6b80;
+$line: #e7e5f4;
 
 // Map Bootstrap's other semantic colours onto the brand so no stray green/yellow/cyan appears.
 $success: $primary;
 $info: $primary;
-$warning: #6c6a78;
-$secondary: #6c6a78;
+$warning: $muted;
+$secondary: $muted;
+$dark: $plum;
+$light: #ffffff;
+
+$enable-gradients: false;
+$enable-shadows: false;
 
 $body-color: $ink;
-$body-bg: #ffffff;
+$body-bg: $lavender;
 $font-family-sans-serif: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 $font-size-base: 0.9375rem;
-$headings-font-weight: 600;
+$line-height-base: 1.6;
+$headings-font-weight: 700;
 $headings-color: $ink;
+$headings-line-height: 1.15;
+$text-muted: $muted;
+$border-color: $line;
 
-$border-radius: 0.625rem;
-$border-radius-sm: 0.5rem;
-$border-radius-lg: 0.875rem;
-$border-color: #e8e7ef;
+$border-radius: 0.75rem;
+$border-radius-sm: 0.55rem;
+$border-radius-lg: 1rem;
+$border-radius-pill: 50rem;
 
-$box-shadow-sm: 0 1px 2px rgba($plum, 0.05), 0 1px 3px rgba($plum, 0.05);
-$box-shadow: 0 4px 16px rgba($plum, 0.07);
-$box-shadow-lg: 0 12px 40px rgba($plum, 0.12);
+$box-shadow-sm: 0 1px 2px rgba($plum, 0.04);
+$box-shadow: 0 8px 24px rgba($plum, 0.06);
+$box-shadow-lg: 0 20px 48px rgba($plum, 0.1);
 
+$link-color: $primary;
 $link-decoration: none;
-$input-btn-padding-y: 0.55rem;
-$input-btn-padding-x: 1rem;
-$input-focus-border-color: mix($primary, #ffffff, 55%);
-$input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.15);
+
+$input-btn-padding-y: 0.6rem;
+$input-btn-padding-x: 1.15rem;
+$input-bg: #ffffff;
+$form-select-bg: #ffffff;
+$input-border-color: $line;
+$input-border-radius: 0.8rem;
+$input-border-radius-sm: 0.65rem;
+$input-focus-border-color: $primary;
+$input-focus-box-shadow: 0 0 0 0.22rem rgba($primary, 0.18);
+$form-select-border-radius: 0.8rem;
+$form-select-border-radius-sm: 0.65rem;
+$form-label-font-weight: 500;
+
 $btn-font-weight: 500;
-$card-border-color: $border-color;
+$btn-border-radius: $border-radius-pill;
+$btn-border-radius-sm: $border-radius-pill;
+$btn-border-radius-lg: $border-radius-pill;
+$btn-padding-x: 1.35rem;
+
+$card-border-color: $line;
+$card-border-radius: 1.375rem;
 $card-cap-bg: transparent;
-$table-cell-padding-y: 0.8rem;
-$table-cell-padding-x: 0.75rem;
+$modal-content-border-radius: 1.5rem;
+$modal-content-border-color: $line;
+$modal-backdrop-bg: $plum;
+$modal-backdrop-opacity: 0.45;
+$accordion-border-color: $line;
+$accordion-button-active-bg: #ffffff;
+$accordion-button-active-color: $ink;
+$accordion-button-focus-box-shadow: 0 0 0 0.22rem rgba($primary, 0.18);
+$table-cell-padding-y: 0.85rem;
+$table-cell-padding-x: 0.8rem;
 $badge-font-weight: 500;
-$badge-padding-y: 0.4em;
-$badge-padding-x: 0.7em;
-$modal-content-border-radius: 1rem;
-$toast-border-radius: 0.75rem;
-$offcanvas-horizontal-width: 280px;
+$badge-padding-y: 0.42em;
+$badge-padding-x: 0.75em;
+$progress-bar-bg: $primary;
+$progress-bg: #ebe9fb;
+$progress-border-radius: $border-radius-pill;
+$pagination-border-radius: $border-radius-pill;
+$pagination-border-color: $line;
+$pagination-active-bg: $primary;
+$pagination-active-border-color: $primary;
+$offcanvas-horizontal-width: 290px;
+$tooltip-bg: $plum;
+$mark-bg: #e2e0fb;
+$mark-padding: 0.05em 0.25em;
+$tooltip-border-radius: 0.6rem;
 
 @import "bootstrap/scss/bootstrap";
 
-$workspace-bg: #f6f6fa;
-$muted: #6c6a78;
-$sidebar-width: 264px;
+$radius-card: 1.375rem;
+$sidebar-width: 268px;
+
+// ---- base ----
 
 body {
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.bg-plum {
-  background-color: $plum !important;
+:focus-visible {
+  outline: 3px solid rgba($primary, 0.55);
+  outline-offset: 2px;
 }
 
-.text-plum {
-  color: $plum !important;
+// Bootstrap already draws a focus ring on these.
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.accordion-button:focus-visible {
+  outline: none;
+}
+
+.display-tight {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+
+.heading-tight {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
 }
 
 .text-muted-soft {
   color: $muted !important;
 }
 
+.text-plum {
+  color: $plum !important;
+}
+
+.bg-plum {
+  background-color: $plum !important;
+}
+
 .fw-medium {
   font-weight: 500 !important;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+// ---- buttons ----
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  .btn-arrow {
+    transition: transform 0.15s ease;
+  }
+
+  &:hover .btn-arrow {
+    transform: translateX(3px);
+  }
+}
+
+.btn-light {
+  background: #ffffff;
+  border-color: $line;
+  color: $ink;
+
+  &:hover,
+  &:focus {
+    background: #f7f6fe;
+    border-color: $line;
+    color: $ink;
+  }
+}
+
+.btn-plum {
+  background: $plum;
+  border-color: $plum;
+  color: #ffffff;
+
+  &:hover,
+  &:focus {
+    background: #3a1043;
+    border-color: #3a1043;
+    color: #ffffff;
+  }
+}
+
+.btn-on-dark {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: $plum;
+
+  &:hover,
+  &:focus {
+    background: $lavender;
+    border-color: $lavender;
+    color: $plum;
+  }
+}
+
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+
+// ---- pills, labels, chips ----
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.95rem;
+  border: 1px solid $line;
+  border-radius: $border-radius-pill;
+  background: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $ink;
+
+  &::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: $primary;
+  }
+
+  &.on-dark {
+    background: rgba(#ffffff, 0.08);
+    border-color: rgba(#ffffff, 0.16);
+    color: #ffffff;
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: $border-radius-pill;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.pill-primary {
+  background: rgba($primary, 0.12);
+  color: #3c37b0;
+}
+
+.pill-solid {
+  background: $primary;
+  color: #ffffff;
+}
+
+.pill-grey {
+  background: #eeedf5;
+  color: #4d4c5c;
+}
+
+.pill-danger {
+  background: rgba($danger, 0.1);
+  color: #a52834;
+}
+
+.pill-plum {
+  background: $plum;
+  color: #ffffff;
+}
+
+.pill-division {
+  background: rgba($plum, 0.07);
+  color: $plum;
+}
+
+.pill-outline {
+  background: #ffffff;
+  border: 1px solid $line;
+  color: $ink;
+}
+
+.pill-on-dark {
+  background: rgba(#ffffff, 0.1);
+  color: #ffffff;
+}
+
+// Scope toggles and similar choices: pill chips in a pill tray.
+.chip-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 0.3rem;
+  gap: 0.25rem;
+  background: #ffffff;
+  border: 1px solid $line;
+  border-radius: $border-radius-pill;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border: 0;
+  border-radius: $border-radius-pill;
+  background: transparent;
+  color: $muted;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    color: $ink;
+  }
+
+  &.active {
+    background: $primary;
+    color: #ffffff;
+  }
+}
+
+// ---- cards ----
+
+.surface {
+  background: #ffffff;
+  border: 1px solid $line;
+  border-radius: $radius-card;
+  box-shadow: $box-shadow;
+}
+
+.surface-dark {
+  background: $plum;
+  border: 1px solid $plum;
+  border-radius: $radius-card;
+  box-shadow: $box-shadow;
+  color: rgba(#ffffff, 0.86);
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #ffffff;
+  }
+
+  .text-muted-soft {
+    color: rgba(#ffffff, 0.66) !important;
+  }
+}
+
+.icon-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 0.9rem;
+  background: rgba($primary, 0.1);
+  color: $primary;
+
+  &.sm {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 0.7rem;
+  }
+
+  &.on-dark {
+    background: rgba(#ffffff, 0.1);
+    color: #ffffff;
+  }
 }
 
 // ---- logo ----
@@ -78,18 +393,22 @@ body {
   display: inline-flex;
   align-items: center;
   background: #ffffff;
-  border-radius: 0.75rem;
+  border-radius: 0.85rem;
   padding: 0.45rem 0.75rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 
   img {
     display: block;
-    height: 34px;
+    height: 32px;
     width: auto;
   }
 
   &.logo-tile-lg img {
-    height: 52px;
+    height: 46px;
+  }
+
+  &.bare {
+    padding: 0;
+    background: transparent;
   }
 }
 
@@ -98,7 +417,7 @@ body {
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background: $workspace-bg;
+  background: $lavender;
 }
 
 // The plum column stretches with the page; the menu inside it stays put while the page scrolls.
@@ -122,46 +441,76 @@ body {
   padding: 1.5rem 1rem;
 }
 
-.sidebar-product {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+.sidebar-caption {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(#ffffff, 0.55);
+  color: rgba(#ffffff, 0.5);
 }
 
 .sidebar-nav {
   .nav-link {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.7rem 0.9rem;
-    margin-bottom: 0.25rem;
-    border-radius: $border-radius;
+    gap: 0.8rem;
+    padding: 0.72rem 1rem;
+    margin-bottom: 0.3rem;
+    border-radius: $border-radius-pill;
     color: rgba(#ffffff, 0.72);
     font-weight: 500;
     transition: background-color 0.15s ease, color 0.15s ease;
 
-    .bi {
-      font-size: 1.1rem;
-    }
-
     &:hover {
       color: #ffffff;
-      background: rgba(#ffffff, 0.06);
+      background: rgba(#ffffff, 0.07);
     }
 
     &.active {
       color: #ffffff;
-      background: rgba($primary, 0.28);
-      box-shadow: inset 3px 0 0 $primary;
+      background: $primary;
     }
   }
 
-  .nav-badge {
+  .nav-count {
     margin-left: auto;
     min-width: 1.6rem;
-    background: $primary;
+    padding: 0.1rem 0.5rem;
+    border-radius: $border-radius-pill;
+    background: #ffffff;
+    color: $plum;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+  }
+}
+
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid rgba(#ffffff, 0.16);
+  border-radius: $border-radius-pill;
+  background: rgba(#ffffff, 0.05);
+  color: rgba(#ffffff, 0.7);
+  font-size: 0.85rem;
+  text-align: left;
+
+  &:hover {
     color: #ffffff;
+    border-color: rgba(#ffffff, 0.32);
+  }
+
+  kbd {
+    margin-left: auto;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.4rem;
+    background: rgba(#ffffff, 0.12);
+    color: rgba(#ffffff, 0.8);
+    font-family: inherit;
+    font-size: 0.7rem;
   }
 }
 
@@ -181,7 +530,7 @@ body {
   background: $primary;
   color: #ffffff;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .sidebar-offcanvas {
@@ -210,7 +559,7 @@ body {
 }
 
 .workspace {
-  padding: 2rem 2.25rem 3rem;
+  padding: 2.25rem 2.5rem 3rem;
   max-width: 1440px;
 
   @include media-breakpoint-down(md) {
@@ -227,48 +576,25 @@ body {
   margin-bottom: 1.75rem;
 
   h1 {
-    font-size: 1.6rem;
-    margin-bottom: 0.25rem;
+    font-size: clamp(1.85rem, 2.8vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.06;
+    margin-bottom: 0.4rem;
   }
 }
 
-// ---- cards ----
-
-.surface {
-  background: #ffffff;
-  border: 1px solid $border-color;
-  border-radius: 1rem;
-  box-shadow: $box-shadow-sm;
-}
+// ---- dashboard ----
 
 .stat-card {
-  padding: 1.1rem 1.25rem;
+  padding: 1.25rem 1.35rem;
   height: 100%;
 
-  // Icon above the number on phones, beside it from sm up.
-  @include media-breakpoint-down(sm) {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 0.75rem !important;
-  }
-
-  .stat-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 3rem;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.85rem;
-    background: rgba($primary, 0.1);
-    color: $primary;
-    font-size: 1.3rem;
-  }
-
   .stat-value {
-    font-size: 1.6rem;
-    font-weight: 600;
-    line-height: 1.15;
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
   .stat-label {
@@ -279,22 +605,39 @@ body {
   .stat-hint {
     color: $muted;
     font-size: 0.75rem;
-    opacity: 0.8;
+  }
+
+  &.surface-dark {
+    .stat-value {
+      color: #ffffff;
+    }
+
+    .stat-label,
+    .stat-hint {
+      color: rgba(#ffffff, 0.68);
+    }
   }
 }
 
-// ---- filter bar ----
+.chart-card {
+  padding: 1.35rem 1.35rem 0.5rem;
+}
 
 .filter-bar {
   padding: 1rem 1.25rem;
 
   .form-label {
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.72rem;
+    font-weight: 600;
     color: $muted;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 0.3rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+  }
+
+  .form-select,
+  .form-control {
+    border-radius: $border-radius-pill;
   }
 }
 
@@ -305,56 +648,43 @@ body {
   }
 }
 
-.scope-toggle .btn {
-  min-width: 8.5rem;
-}
-
-// ---- documents table ----
-
 .documents-table {
   margin-bottom: 0;
+  --bs-table-bg: transparent;
 
   thead th {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: $muted;
-    background: #fbfbfd;
-    border-bottom-width: 1px;
+    border-bottom: 1px solid $line;
     white-space: nowrap;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
 
   tbody tr {
     cursor: pointer;
 
     &:hover td {
-      background: rgba($primary, 0.035);
+      background: #f8f7fe;
     }
 
     &:focus-visible {
-      outline: 2px solid $primary;
-      outline-offset: -2px;
+      outline: 3px solid rgba($primary, 0.55);
+      outline-offset: -3px;
     }
   }
 
   td {
     vertical-align: middle;
-    border-color: #f0eff5;
+    border-color: #f0eff8;
   }
-}
 
-.file-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 2.25rem;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.6rem;
-  background: rgba($primary, 0.1);
-  color: $primary;
-  font-size: 1.1rem;
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
 }
 
 .doc-title {
@@ -362,54 +692,24 @@ body {
   color: $ink;
 }
 
-.badge-division {
-  background: rgba($plum, 0.08);
-  color: $plum;
-}
-
-.badge-value {
-  background: #f1f0f6;
-  color: #45434f;
-}
-
-.badge-soft-primary {
-  background: rgba($primary, 0.12);
-  color: shade-color($primary, 25%);
-}
-
-.badge-soft-grey {
-  background: #eeedf2;
-  color: #55535f;
-}
-
-.badge-soft-danger {
-  background: rgba($danger, 0.1);
-  color: shade-color($danger, 15%);
-}
-
-.badge-locked {
-  background: $plum;
-  color: #ffffff;
-}
-
-// ---- skeletons and empty states ----
+// ---- skeletons (solid pulse) and empty states ----
 
 .skeleton {
   display: inline-block;
   height: 0.85rem;
   border-radius: 0.4rem;
-  background: linear-gradient(90deg, #efeef4 25%, #f7f7fa 50%, #efeef4 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+  background: #ebe9f6;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
-@keyframes skeleton-shimmer {
-  from {
-    background-position: 200% 0;
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
 
-  to {
-    background-position: -200% 0;
+  50% {
+    opacity: 0.45;
   }
 }
 
@@ -417,16 +717,10 @@ body {
   padding: 3.5rem 1.5rem;
   text-align: center;
 
-  .empty-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    background: rgba($primary, 0.1);
-    color: $primary;
-    font-size: 1.75rem;
+  .icon-tile {
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 1.1rem;
     margin-bottom: 1rem;
   }
 }
@@ -434,27 +728,22 @@ body {
 // ---- upload ----
 
 .dropzone {
-  border: 2px dashed #d6d4e3;
-  border-radius: 1rem;
+  border: 2px dashed #d3d0ee;
+  border-radius: 1.25rem;
   padding: 2rem 1.5rem;
   text-align: center;
-  background: #fbfbfd;
+  background: #faf9ff;
   cursor: pointer;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 
   &:hover,
   &.is-active {
     border-color: $primary;
-    background: rgba($primary, 0.04);
+    background: $lavender;
   }
 
   &.is-rejected {
     border-color: $danger;
-  }
-
-  .dropzone-icon {
-    font-size: 2.2rem;
-    color: $primary;
   }
 }
 
@@ -463,45 +752,89 @@ body {
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1rem;
-  border: 1px solid $border-color;
-  border-radius: 0.85rem;
+  border: 1px solid $line;
+  border-radius: 1rem;
 }
 
 .scan-state {
   padding: 2.5rem 1rem;
   text-align: center;
-
-  .scan-icon {
-    font-size: 2.4rem;
-    color: $primary;
-    animation: scan-pulse 1.4s ease-in-out infinite;
-  }
 }
 
-@keyframes scan-pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.96);
-  }
+// ---- command palette ----
 
-  50% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2050;
+  background: rgba($plum, 0.45);
 }
 
-// ---- toasts ----
-
-.app-toast {
-  border: 0;
+.cmdk-dialog {
+  position: fixed;
+  top: 14vh;
+  left: 50%;
+  z-index: 2051;
+  width: min(640px, calc(100vw - 2rem));
+  transform: translateX(-50%);
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid $line;
+  border-radius: 1.5rem;
   box-shadow: $box-shadow-lg;
-  border-left: 4px solid $primary;
-  min-width: 300px;
 
-  &.app-toast-danger {
-    border-left-color: $danger;
+  [cmdk-input] {
+    width: 100%;
+    padding: 1.1rem 1.25rem 1.1rem 3.1rem;
+    border: 0;
+    border-bottom: 1px solid $line;
+    font-size: 1rem;
+    outline: none;
+    background: transparent;
   }
+
+  [cmdk-list] {
+    max-height: min(420px, 60vh);
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+
+  [cmdk-group-heading] {
+    padding: 0.6rem 0.75rem 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  [cmdk-item] {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.85rem;
+    cursor: pointer;
+
+    &[data-selected="true"] {
+      background: $lavender;
+    }
+  }
+
+  [cmdk-empty],
+  [cmdk-loading] {
+    padding: 1.5rem;
+    text-align: center;
+    color: $muted;
+    font-size: 0.9rem;
+  }
+}
+
+.cmdk-search-icon {
+  position: absolute;
+  top: 1.2rem;
+  left: 1.25rem;
+  color: $muted;
 }
 
 // ---- auth pages ----
@@ -509,31 +842,29 @@ body {
 .auth-shell {
   display: flex;
   min-height: 100vh;
+  background: $lavender;
 }
 
 .auth-brand {
-  position: relative;
-  flex: 0 0 46%;
+  flex: 0 0 44%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 3rem;
-  background:
-    radial-gradient(circle at 15% 10%, rgba($primary, 0.35), transparent 45%),
-    radial-gradient(circle at 90% 90%, rgba($primary, 0.22), transparent 40%),
-    $plum;
+  margin: 1rem;
+  padding: 2.75rem;
+  border-radius: 1.75rem;
+  background: $plum;
   color: #ffffff;
-  overflow: hidden;
 
   h1 {
     color: #ffffff;
-    font-size: 2.2rem;
+    font-size: clamp(2.4rem, 3.8vw, 3.5rem);
   }
 
   .auth-tagline {
-    color: rgba(#ffffff, 0.75);
+    color: rgba(#ffffff, 0.72);
     font-size: 1.05rem;
-    max-width: 30rem;
+    max-width: 28rem;
   }
 
   .auth-feature {
@@ -542,20 +873,8 @@ body {
     align-items: flex-start;
     margin-bottom: 1.25rem;
 
-    .auth-feature-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 2.6rem;
-      height: 2.6rem;
-      border-radius: 0.75rem;
-      background: rgba(#ffffff, 0.1);
-      color: #ffffff;
-      font-size: 1.15rem;
-    }
-
     p {
-      color: rgba(#ffffff, 0.65);
+      color: rgba(#ffffff, 0.66);
       font-size: 0.875rem;
       margin: 0;
     }
@@ -565,10 +884,10 @@ body {
 .auth-form-side {
   flex: 1 1 auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem;
-  background: $workspace-bg;
+  padding: 2rem 1.25rem;
 }
 
 .auth-card {
@@ -579,13 +898,10 @@ body {
   @include media-breakpoint-down(sm) {
     padding: 1.75rem 1.25rem;
   }
-}
 
-.auth-mobile-brand {
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem 1rem;
-  background: $plum;
+  h2 {
+    font-size: 1.9rem;
+  }
 }
 
 .full-page-center {
@@ -593,5 +909,448 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: $workspace-bg;
+  background: $lavender;
+}
+
+mark {
+  border-radius: 0.3rem;
+  color: $ink;
+}
+
+// Lenis drives scrolling on the landing page; native smooth scrolling would fight it.
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+// ---- toasts (sonner) ----
+
+[data-sonner-toast] {
+  font-family: $font-family-sans-serif !important;
+  border-radius: 1rem !important;
+  border: 1px solid $line !important;
+  box-shadow: $box-shadow-lg !important;
+}
+
+// ==== landing page ====
+
+.landing {
+  background: $lavender;
+  overflow-x: clip;
+}
+
+.landing-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.landing-section {
+  padding: 6.5rem 0;
+  scroll-margin-top: 5rem;
+
+  @include media-breakpoint-down(md) {
+    padding: 4.25rem 0;
+  }
+}
+
+.landing-heading {
+  font-size: clamp(2.1rem, 4.4vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.06;
+}
+
+.landing-lead {
+  color: $muted;
+  font-size: 1.075rem;
+  max-width: 36rem;
+}
+
+// Navbar: a floating white pill that tightens once the page scrolls.
+.landing-nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  padding: 0.85rem 1rem 0;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.6rem 0.6rem 0.6rem 1.1rem;
+  background: #ffffff;
+  border: 1px solid $line;
+  border-radius: $border-radius-pill;
+  box-shadow: $box-shadow-sm;
+  transition: padding 0.2s ease, box-shadow 0.2s ease, max-width 0.2s ease;
+
+  &.compact {
+    max-width: 1080px;
+    padding: 0.38rem 0.4rem 0.38rem 0.95rem;
+    box-shadow: $box-shadow;
+  }
+
+  .logo-tile img {
+    height: 30px;
+  }
+}
+
+.landing-links {
+  display: flex;
+  gap: 0.25rem;
+
+  a,
+  button {
+    padding: 0.45rem 0.95rem;
+    border: 0;
+    border-radius: $border-radius-pill;
+    background: transparent;
+    color: $ink;
+    font-weight: 500;
+    font-size: 0.92rem;
+
+    &:hover {
+      background: $lavender;
+      color: $ink;
+    }
+  }
+}
+
+.landing-mobile-menu {
+  max-width: 1200px;
+  margin: 0.5rem auto 0;
+  padding: 0.75rem;
+  background: #ffffff;
+  border: 1px solid $line;
+  border-radius: 1.25rem;
+  box-shadow: $box-shadow;
+
+  a,
+  button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-radius: 0.85rem;
+    background: transparent;
+    color: $ink;
+    font-weight: 500;
+    text-align: left;
+
+    &:hover {
+      background: $lavender;
+    }
+  }
+}
+
+// Hero
+.hero {
+  padding: 4.5rem 0 5rem;
+
+  @include media-breakpoint-down(lg) {
+    padding: 3rem 0 4rem;
+  }
+
+  h1 {
+    font-size: clamp(2.7rem, 5.6vw, 4.75rem);
+  }
+}
+
+.check-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.92rem;
+
+  .check-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    background: $primary;
+    color: #ffffff;
+  }
+}
+
+// The hero composition: product cards stacked on phones, overlapping from lg up.
+.hero-visual {
+  display: grid;
+  gap: 1rem;
+
+  @include media-breakpoint-up(lg) {
+    position: relative;
+    display: block;
+    min-height: 600px;
+  }
+}
+
+.float-card {
+  padding: 1.1rem 1.2rem;
+}
+
+// Each card's slot is what gets positioned (the card inside it floats).
+.fc-slot {
+  @include media-breakpoint-up(lg) {
+    position: absolute;
+
+    &.fc-scan {
+      top: 0;
+      left: 2%;
+      width: 64%;
+      z-index: 2;
+    }
+
+    &.fc-access {
+      top: 24%;
+      right: 0;
+      width: 66%;
+      z-index: 3;
+    }
+
+    &.fc-search {
+      top: 52%;
+      left: 0;
+      width: 54%;
+      z-index: 4;
+    }
+
+    // Sits to the right of the search card so neither hides the other's text.
+    &.fc-audit {
+      bottom: 0;
+      right: 0;
+      width: 50%;
+      z-index: 5;
+    }
+  }
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  background: $primary;
+  vertical-align: text-bottom;
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0;
+  font-size: 0.82rem;
+
+  & + & {
+    border-top: 1px solid #f0eff8;
+  }
+
+  code {
+    color: $primary;
+    font-size: 0.78rem;
+  }
+}
+
+.surface-dark .mini-row + .mini-row {
+  border-top-color: rgba(#ffffff, 0.1);
+}
+
+.surface-dark .mini-row code {
+  color: #b9b6ff;
+}
+
+// Feature grid
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.75rem;
+
+  h3 {
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    margin: 1.25rem 0 0.5rem;
+  }
+
+  p {
+    color: $muted;
+    margin-bottom: 1.5rem;
+  }
+
+  &.surface-dark p {
+    color: rgba(#ffffff, 0.68);
+  }
+
+  .feature-stat {
+    margin-top: auto;
+    align-self: flex-start;
+  }
+}
+
+// How it works: numbered cards joined by a dashed line.
+.steps {
+  position: relative;
+}
+
+.steps-line {
+  position: absolute;
+  top: 3.15rem;
+  left: 12.5%;
+  right: 12.5%;
+  border-top: 2px dashed #cdc9f2;
+
+  @include media-breakpoint-down(lg) {
+    display: none;
+  }
+}
+
+.step-card {
+  position: relative;
+  height: 100%;
+  padding: 1.5rem;
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background: $primary;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 0 0 6px $lavender;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    margin: 1.25rem 0 0.4rem;
+  }
+
+  p {
+    color: $muted;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+// Numbers strip
+.number-value {
+  font-size: clamp(2.4rem, 4.5vw, 3.4rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: $ink;
+}
+
+// FAQ
+.faq .accordion-item {
+  margin-bottom: 0.75rem;
+  border: 1px solid $line;
+  border-radius: 1.1rem !important;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.faq .accordion-button {
+  padding: 1.15rem 1.35rem;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 1.1rem !important;
+
+  &:not(.collapsed) {
+    box-shadow: none;
+    color: $ink;
+  }
+}
+
+.faq .accordion-body {
+  padding: 0 1.35rem 1.25rem;
+  color: $muted;
+}
+
+// CTA band and footer
+.cta-band {
+  padding: clamp(2.5rem, 6vw, 4.5rem);
+  border-radius: 2rem;
+  background: $plum;
+  color: #ffffff;
+
+  h2 {
+    color: #ffffff;
+    font-size: clamp(2rem, 4.4vw, 3.4rem);
+  }
+}
+
+.landing-footer {
+  margin-top: 5rem;
+  padding: 4rem 0 2rem;
+  background: $plum;
+  color: rgba(#ffffff, 0.7);
+  border-radius: 2rem 2rem 0 0;
+
+  h3 {
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  a,
+  button.link {
+    display: inline-block;
+    padding: 0.2rem 0;
+    border: 0;
+    background: none;
+    color: rgba(#ffffff, 0.7);
+    font-size: 0.92rem;
+
+    &:hover {
+      color: #ffffff;
+    }
+  }
+
+  .footer-bottom {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(#ffffff, 0.12);
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .typing-caret {
+    animation: none;
+  }
 }
