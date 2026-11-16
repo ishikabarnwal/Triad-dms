@@ -34,3 +34,35 @@ def serialize_user(user):
         "role": user.get("role", "member"),
         "created_at": isoformat(user.get("created_at")),
     }
+
+
+def serialize_document(document, access=None, include_ocr_text=False):
+    """Public view of a document.
+
+    `access` is an (access_status, can_download) pair for the viewer. OCR text is
+    only included when the caller has checked the viewer may read it.
+    """
+    document_id = str(document["_id"])
+    body = {
+        "id": document_id,
+        "doc_id": document_id,
+        "title": document.get("title"),
+        "filename": document.get("filename"),
+        "content_type": document.get("content_type"),
+        "size": document.get("size"),
+        "division": document.get("division"),
+        "metadata": document.get("metadata", {}),
+        "ocr_status": document.get("ocr_status"),
+        "ocr_error": document.get("ocr_error"),
+        "ocr_chars": document.get("ocr_chars", 0),
+        "page_count": document.get("page_count"),
+        "uploaded_by": str(document["uploaded_by"]) if document.get("uploaded_by") else None,
+        "uploaded_by_name": document.get("uploaded_by_name"),
+        "upload_source": document.get("upload_source"),
+        "created_at": isoformat(document.get("created_at")),
+    }
+    if access is not None:
+        body["access_status"], body["can_download"] = access
+    if include_ocr_text:
+        body["ocr_text"] = document.get("ocr_text", "")
+    return body
