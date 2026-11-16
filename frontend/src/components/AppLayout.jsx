@@ -1,96 +1,165 @@
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { AnimatePresence } from "framer-motion";
 import { LayoutDashboard, LogOut, Menu, Search, Settings, ShieldCheck } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Button, Nav, Offcanvas } from "react-bootstrap";
-import { NavLink, useLocation, useOutlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import usePendingCount from "../hooks/usePendingCount";
-import { initials } from "../utils/format";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { NavLink, useLocation, useNavigate, useOutlet } from "react-router-dom";
+import client from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
+import useDivisionCodes from "@/hooks/useDivisions";
+import usePendingCount from "@/hooks/usePendingCount";
+import { cn } from "@/lib/utils";
+import { initials } from "@/utils/format";
 import Logo from "./Logo";
 import { PageTransition } from "./motion";
+import { SheetContent } from "./ui/dialog";
 
 // Only downloaded the first time someone opens it.
 const CommandPalette = lazy(() => import("./CommandPalette"));
 
-const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
-  { to: "/search", label: "Search", Icon: Search },
-  { to: "/access", label: "Access Requests", Icon: ShieldCheck, showPending: true },
-  { to: "/settings", label: "Settings", Icon: Settings, adminOnly: true },
+const WORKSPACE = [
+  { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard, keys: "G D" },
+  { to: "/search", label: "Search", Icon: Search, keys: "G S" },
+  { to: "/access", label: "Access requests", Icon: ShieldCheck, keys: "G A", showPending: true },
 ];
+const ADMIN = [{ to: "/settings", label: "Settings", Icon: Settings, keys: "G C" }];
+
+// Second key of a "G then X" shortcut -> route.
+const SHORTCUTS = { d: "/dashboard", s: "/search", a: "/access", c: "/settings" };
+const SHORTCUT_WINDOW_MS = 900;
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
-function SidebarContent({ onNavigate, onOpenPalette }) {
+function isTyping(target) {
+  return target.closest("input, textarea, select, [contenteditable=true], [cmdk-input]");
+}
+
+/** Reports whether the API and database answer, from /api/health. */
+function useSystemStatus() {
+  const [status, setStatus] = useState("checking");
+  useEffect(() => {
+    client
+      .get("/health")
+      .then(() => setStatus("online"))
+      .catch(() => setStatus("degraded"));
+  }, []);
+  return status;
+}
+
+function NavItem({ item, pending, onNavigate }) {
+  const { to, label, Icon, keys, showPending } = item;
+  return (
+    <NavLink
+      to={to}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          "group flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors",
+          isActive ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/5 hover:text-white",
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon className={cn("size-4", isActive ? "text-white" : "text-white/55")} aria-hidden="true" />
+          <span className="flex-1">{label}</span>
+          {showPending && pending > 0 ? (
+            <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] leading-5 text-white" aria-label={`${pending} pending`}>
+              {pending}
+            </span>
+          ) : (
+            <span className="font-mono text-[10px] tracking-wider text-white/30 opacity-0 transition-opacity group-hover:opacity-100">
+              {keys}
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+function Sidebar({ onNavigate, onOpenPalette }) {
   const { user, isAdmin, logout } = useAuth();
   const pending = usePendingCount(Boolean(user));
+  const status = useSystemStatus();
+  const codes = useDivisionCodes();
 
   return (
-    <div className="sidebar-inner">
-      <div className="mb-4 px-1">
-        <Logo />
-        <div className="sidebar-caption mt-3">Document Management</div>
+    <div className="flex h-full flex-col bg-plum px-3 py-4 text-white">
+      <div className="px-1.5">
+        <Logo size="sm" />
+        <div className="label-mono mt-4 flex items-center gap-1.5 text-white/45">
+          SYS.STATUS
+          <span className={cn("size-1.5 rounded-full", status === "online" ? "bg-primary" : "bg-danger")} />
+          <span className={status === "online" ? "text-white/80" : "text-white/60"}>{status.toUpperCase()}</span>
+        </div>
       </div>
 
-      <button type="button" className="sidebar-search mb-4" onClick={onOpenPalette}>
-        <Search size={16} aria-hidden="true" />
-        <span>Quick search</span>
-        <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
+      <button
+        type="button"
+        onClick={onOpenPalette}
+        className="mt-5 flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-white/12 bg-white/5 px-2.5 text-sm text-white/55 transition-colors hover:border-white/25 hover:text-white"
+      >
+        <Search className="size-4" aria-hidden="true" />
+        <span className="flex-1 text-left">Search…</span>
+        <kbd className="rounded bg-white/10 px-1.5 font-mono text-[10px] text-white/70">{isMac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
 
-      <Nav as="nav" className="sidebar-nav flex-column flex-grow-1" aria-label="Main">
-        {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(({ to, label, Icon, showPending }) => (
-          <Nav.Link as={NavLink} key={to} to={to} onClick={onNavigate}>
-            <Icon size={18} aria-hidden="true" />
-            <span>{label}</span>
-            {showPending && pending > 0 && (
-              <span className="nav-count" aria-label={`${pending} pending requests`}>
-                {pending}
-              </span>
-            )}
-          </Nav.Link>
-        ))}
-      </Nav>
-
-      <div className="sidebar-user d-flex align-items-center gap-2">
-        <span className="avatar" aria-hidden="true">
-          {initials(user?.name)}
-        </span>
-        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-          <div className="text-white fw-medium text-truncate">{user?.name}</div>
-          <div className="small text-truncate" style={{ color: "rgba(255,255,255,0.65)" }}>
-            {user?.division}
-            {isAdmin && " · Admin"}
+      <nav className="mt-6 flex-1 space-y-6" aria-label="Main">
+        <div>
+          <div className="label-mono mb-2 px-2.5 text-white/35">Workspace</div>
+          <div className="space-y-0.5">
+            {WORKSPACE.map((item) => (
+              <NavItem key={item.to} item={item} pending={pending} onNavigate={onNavigate} />
+            ))}
           </div>
         </div>
-        <Button variant="link" className="text-white p-1 opacity-75" onClick={logout} title="Log out" aria-label="Log out">
-          <LogOut size={18} aria-hidden="true" />
-        </Button>
+        {isAdmin && (
+          <div>
+            <div className="label-mono mb-2 px-2.5 text-white/35">Admin</div>
+            {ADMIN.map((item) => (
+              <NavItem key={item.to} item={item} pending={pending} onNavigate={onNavigate} />
+            ))}
+          </div>
+        )}
+      </nav>
+
+      <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-2.5">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold" aria-hidden="true">
+          {initials(user?.name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium">{user?.name}</div>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span className="rounded-full border border-white/15 px-1.5 font-mono text-[9.5px] leading-4 tracking-wider text-white/70 uppercase">
+              {codes[user?.division] || user?.division}
+            </span>
+            {isAdmin && <span className="font-mono text-[9.5px] tracking-wider text-white/45 uppercase">Admin</span>}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={logout}
+          className="cursor-pointer rounded-lg p-1.5 text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Log out"
+          title="Log out"
+        >
+          <LogOut className="size-4" />
+        </button>
       </div>
     </div>
   );
 }
 
-/** Plum sidebar on desktop, an off-canvas menu on smaller screens, and the animated page on the right. */
+/** Compact plum sidebar on desktop, a slide-in sheet on smaller screens, and the animated page. */
 export default function AppLayout() {
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const outlet = useOutlet();
   const [menuOpen, setMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteUsed, setPaletteUsed] = useState(false);
-  const location = useLocation();
-  // useOutlet keeps the old page mounted while it animates out.
-  const outlet = useOutlet();
-
-  useEffect(() => {
-    const onKey = (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPaletteUsed(true);
-        setPaletteOpen((current) => !current);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const pendingG = useRef(0);
 
   const openPalette = () => {
     setMenuOpen(false);
@@ -98,32 +167,60 @@ export default function AppLayout() {
     setPaletteOpen(true);
   };
 
+  useEffect(() => {
+    const onKey = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteUsed(true);
+        setPaletteOpen((current) => !current);
+        return;
+      }
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "g") {
+        pendingG.current = Date.now();
+        return;
+      }
+      const route = SHORTCUTS[key];
+      if (route && Date.now() - pendingG.current < SHORTCUT_WINDOW_MS && (route !== "/settings" || isAdmin)) {
+        pendingG.current = 0;
+        navigate(route);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate, isAdmin]);
+
   return (
-    <div className="app-shell">
-      <aside className="sidebar d-none d-lg-block">
-        <SidebarContent onOpenPalette={openPalette} />
+    <div className="flex min-h-dvh bg-lavender">
+      <aside className="hidden w-60 shrink-0 bg-plum lg:block">
+        <div className="sticky top-0 h-dvh">
+          <Sidebar onOpenPalette={openPalette} />
+        </div>
       </aside>
 
-      <div className="app-main">
-        <div className="mobile-topbar d-lg-none">
-          <Logo />
-          <div className="d-flex gap-1">
-            <Button variant="link" className="text-white p-2" onClick={openPalette} aria-label="Search">
-              <Search size={20} aria-hidden="true" />
-            </Button>
-            <Button variant="link" className="text-white p-2" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-              <Menu size={22} aria-hidden="true" />
-            </Button>
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-30 flex items-center justify-between bg-plum px-4 py-3 lg:hidden">
+          <Logo size="sm" />
+          <div className="flex gap-1 text-white">
+            <button type="button" onClick={openPalette} className="rounded-lg p-2 hover:bg-white/10" aria-label="Search">
+              <Search className="size-5" />
+            </button>
+            <button type="button" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 hover:bg-white/10" aria-label="Open menu">
+              <Menu className="size-5" />
+            </button>
           </div>
-        </div>
+        </header>
 
-        <Offcanvas show={menuOpen} onHide={() => setMenuOpen(false)} className="sidebar-offcanvas" aria-label="Menu">
-          <Offcanvas.Body>
-            <SidebarContent onNavigate={() => setMenuOpen(false)} onOpenPalette={openPalette} />
-          </Offcanvas.Body>
-        </Offcanvas>
+        <DialogPrimitive.Root open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetContent title="Menu">
+            <Sidebar onNavigate={() => setMenuOpen(false)} onOpenPalette={openPalette} />
+          </SheetContent>
+        </DialogPrimitive.Root>
 
-        <main className="workspace">
+        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname}>{outlet}</PageTransition>
           </AnimatePresence>
@@ -132,7 +229,7 @@ export default function AppLayout() {
 
       {paletteUsed && (
         <Suspense fallback={null}>
-          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+          <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </Suspense>
       )}
     </div>
