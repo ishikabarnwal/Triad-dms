@@ -1,19 +1,27 @@
-import { useState } from "react";
-import { Badge, Button, Nav, Offcanvas } from "react-bootstrap";
-import { NavLink, Outlet } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { LayoutDashboard, LogOut, Menu, Search, Settings, ShieldCheck } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Button, Nav, Offcanvas } from "react-bootstrap";
+import { NavLink, useLocation, useOutlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import usePendingCount from "../hooks/usePendingCount";
 import { initials } from "../utils/format";
 import Logo from "./Logo";
+import { PageTransition } from "./motion";
+
+// Only downloaded the first time someone opens it.
+const CommandPalette = lazy(() => import("./CommandPalette"));
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: "bi-grid-1x2", end: true },
-  { to: "/search", label: "Search", icon: "bi-search" },
-  { to: "/access", label: "Access Requests", icon: "bi-shield-lock", showPending: true },
-  { to: "/settings", label: "Settings", icon: "bi-gear", adminOnly: true },
+  { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { to: "/search", label: "Search", Icon: Search },
+  { to: "/access", label: "Access Requests", Icon: ShieldCheck, showPending: true },
+  { to: "/settings", label: "Settings", Icon: Settings, adminOnly: true },
 ];
 
-function SidebarContent({ onNavigate }) {
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+
+function SidebarContent({ onNavigate, onOpenPalette }) {
   const { user, isAdmin, logout } = useAuth();
   const pending = usePendingCount(Boolean(user));
 
@@ -21,18 +29,24 @@ function SidebarContent({ onNavigate }) {
     <div className="sidebar-inner">
       <div className="mb-4 px-1">
         <Logo />
-        <div className="sidebar-product mt-3">Document Management</div>
+        <div className="sidebar-caption mt-3">Document Management</div>
       </div>
 
+      <button type="button" className="sidebar-search mb-4" onClick={onOpenPalette}>
+        <Search size={16} aria-hidden="true" />
+        <span>Quick search</span>
+        <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
+      </button>
+
       <Nav as="nav" className="sidebar-nav flex-column flex-grow-1" aria-label="Main">
-        {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map((item) => (
-          <Nav.Link as={NavLink} key={item.to} to={item.to} end={item.end} onClick={onNavigate}>
-            <i className={`bi ${item.icon}`} aria-hidden="true" />
-            <span>{item.label}</span>
-            {item.showPending && pending > 0 && (
-              <Badge pill bg="" className="nav-badge" aria-label={`${pending} pending requests`}>
+        {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(({ to, label, Icon, showPending }) => (
+          <Nav.Link as={NavLink} key={to} to={to} onClick={onNavigate}>
+            <Icon size={18} aria-hidden="true" />
+            <span>{label}</span>
+            {showPending && pending > 0 && (
+              <span className="nav-count" aria-label={`${pending} pending requests`}>
                 {pending}
-              </Badge>
+              </span>
             )}
           </Nav.Link>
         ))}
@@ -42,49 +56,85 @@ function SidebarContent({ onNavigate }) {
         <span className="avatar" aria-hidden="true">
           {initials(user?.name)}
         </span>
-        <div className="flex-grow-1 min-w-0" style={{ minWidth: 0 }}>
+        <div className="flex-grow-1" style={{ minWidth: 0 }}>
           <div className="text-white fw-medium text-truncate">{user?.name}</div>
-          <div className="small text-truncate" style={{ color: "rgba(255,255,255,0.6)" }}>
+          <div className="small text-truncate" style={{ color: "rgba(255,255,255,0.65)" }}>
             {user?.division}
             {isAdmin && " · Admin"}
           </div>
         </div>
-        <Button variant="link" className="text-white-50 p-1" onClick={logout} title="Log out" aria-label="Log out">
-          <i className="bi bi-box-arrow-right fs-5" />
+        <Button variant="link" className="text-white p-1 opacity-75" onClick={logout} title="Log out" aria-label="Log out">
+          <LogOut size={18} aria-hidden="true" />
         </Button>
       </div>
     </div>
   );
 }
 
-/** Plum sidebar on desktop, an off-canvas menu on smaller screens, and the page on the right. */
+/** Plum sidebar on desktop, an off-canvas menu on smaller screens, and the animated page on the right. */
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteUsed, setPaletteUsed] = useState(false);
+  const location = useLocation();
+  // useOutlet keeps the old page mounted while it animates out.
+  const outlet = useOutlet();
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteUsed(true);
+        setPaletteOpen((current) => !current);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const openPalette = () => {
+    setMenuOpen(false);
+    setPaletteUsed(true);
+    setPaletteOpen(true);
+  };
 
   return (
     <div className="app-shell">
       <aside className="sidebar d-none d-lg-block">
-        <SidebarContent />
+        <SidebarContent onOpenPalette={openPalette} />
       </aside>
 
       <div className="app-main">
         <div className="mobile-topbar d-lg-none">
           <Logo />
-          <Button variant="link" className="text-white p-1" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-            <i className="bi bi-list fs-3" />
-          </Button>
+          <div className="d-flex gap-1">
+            <Button variant="link" className="text-white p-2" onClick={openPalette} aria-label="Search">
+              <Search size={20} aria-hidden="true" />
+            </Button>
+            <Button variant="link" className="text-white p-2" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+              <Menu size={22} aria-hidden="true" />
+            </Button>
+          </div>
         </div>
 
-        <Offcanvas show={menuOpen} onHide={() => setMenuOpen(false)} className="sidebar-offcanvas">
+        <Offcanvas show={menuOpen} onHide={() => setMenuOpen(false)} className="sidebar-offcanvas" aria-label="Menu">
           <Offcanvas.Body>
-            <SidebarContent onNavigate={() => setMenuOpen(false)} />
+            <SidebarContent onNavigate={() => setMenuOpen(false)} onOpenPalette={openPalette} />
           </Offcanvas.Body>
         </Offcanvas>
 
         <main className="workspace">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <PageTransition key={location.pathname}>{outlet}</PageTransition>
+          </AnimatePresence>
         </main>
       </div>
+
+      {paletteUsed && (
+        <Suspense fallback={null}>
+          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

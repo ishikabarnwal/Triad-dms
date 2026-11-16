@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Button, ButtonGroup, Col, Row } from "react-bootstrap";
+import { AlertTriangle, ArrowRight, Building2, CalendarDays, CloudUpload, Filter, FolderOpen, Globe, Hourglass, ScanText } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Button, Col, Row } from "react-bootstrap";
 import { useSearchParams } from "react-router-dom";
 import { errorInfo } from "../api/client";
 import { listDocuments } from "../api/documents";
@@ -16,17 +17,27 @@ import useMetadataFields from "../hooks/useMetadataFields";
 
 const PAGE_SIZE = 15;
 
-function StatsRow({ stats, loading, isAdmin }) {
+// recharts is large; load it after the rest of the dashboard.
+const ReportChart = lazy(() => import("../components/ReportChart"));
+const chartPlaceholder = <span className="skeleton w-100" style={{ height: 220 }} />;
+
+function StatsRow({ stats, isAdmin }) {
+  const loading = !stats;
   const cards = [
-    { icon: "bi-folder2-open", label: "Total documents", value: stats?.total_documents },
-    { icon: "bi-calendar-week", label: "Uploaded this week", value: stats?.uploaded_this_week },
-    { icon: "bi-hourglass-split", label: "Pending requests", value: stats?.pending_requests, hint: isAdmin ? "Across all divisions" : "Waiting on your division" },
-    { icon: "bi-upc-scan", label: "Text extracted (OCR)", value: stats?.ocr?.done },
+    { Icon: FolderOpen, label: "Total documents", value: stats?.total_documents, dark: true },
+    { Icon: CalendarDays, label: "Uploaded this week", value: stats?.uploaded_this_week },
+    {
+      Icon: Hourglass,
+      label: "Pending requests",
+      value: stats?.pending_requests,
+      hint: isAdmin ? "Across all divisions" : "Waiting on your division",
+    },
+    { Icon: ScanText, label: "Text extracted (OCR)", value: stats?.ocr?.done },
   ];
   return (
-    <Row className="g-3 mb-4">
+    <Row className="g-3">
       {cards.map((card) => (
-        <Col key={card.label} xs={6} xl={3}>
+        <Col key={card.label} xs={6}>
           <StatCard {...card} value={card.value ?? 0} loading={loading} />
         </Col>
       ))}
@@ -94,8 +105,9 @@ export default function DashboardPage() {
 
   const uploadButton = (
     <Button onClick={() => setShowUpload(true)} disabled={fieldsLoading || Boolean(fieldsError)}>
-      <i className="bi bi-cloud-arrow-up me-2" aria-hidden="true" />
+      <CloudUpload size={17} aria-hidden="true" />
       Upload document
+      <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
     </Button>
   );
 
@@ -103,25 +115,50 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title="Document Hub"
-        subtitle={isAdmin ? "All divisions, at a glance." : `Documents for ${user.division} and anything shared with you.`}
+        subtitle={isAdmin ? "Every division, at a glance." : `${user.division} documents, plus anything shared with you.`}
         actions={uploadButton}
       />
 
-      <StatsRow stats={stats} loading={!stats} isAdmin={isAdmin} />
+      <Row className="g-3 mb-4">
+        <Col xl={7}>
+          <StatsRow stats={stats} isAdmin={isAdmin} />
+        </Col>
+        <Col xl={5}>
+          <div className="surface chart-card h-100">
+            <div className="d-flex align-items-center justify-content-between mb-2">
+              <h2 className="h6 heading-tight mb-0">Documents by {stats?.by_group?.field || "type"}</h2>
+              <span className="pill pill-outline">{isAdmin ? "All divisions" : user.division}</span>
+            </div>
+            <Suspense fallback={chartPlaceholder}>
+              <ReportChart group={stats?.by_group} loading={!stats} />
+            </Suspense>
+          </div>
+        </Col>
+      </Row>
 
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <ButtonGroup className="scope-toggle" aria-label="Which documents to show">
-          <Button variant={scope === "division" ? "primary" : "outline-primary"} onClick={() => setScope("division")}>
-            <i className="bi bi-building me-2" aria-hidden="true" />
+        <div className="chip-group" role="group" aria-label="Which documents to show">
+          <button
+            type="button"
+            className={`chip ${scope === "division" ? "active" : ""}`}
+            aria-pressed={scope === "division"}
+            onClick={() => setScope("division")}
+          >
+            <Building2 size={16} aria-hidden="true" />
             My Division
-          </Button>
-          <Button variant={scope === "all" ? "primary" : "outline-primary"} onClick={() => setScope("all")}>
-            <i className="bi bi-globe2 me-2" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`chip ${scope === "all" ? "active" : ""}`}
+            aria-pressed={scope === "all"}
+            onClick={() => setScope("all")}
+          >
+            <Globe size={16} aria-hidden="true" />
             All Divisions
-          </Button>
-        </ButtonGroup>
+          </button>
+        </div>
         {!loading && (
-          <span className="small text-muted-soft">
+          <span className="pill pill-outline">
             {result.total} {result.total === 1 ? "document" : "documents"}
           </span>
         )}
@@ -133,21 +170,33 @@ export default function DashboardPage() {
       <div className="surface overflow-hidden">
         {error ? (
           <EmptyState
-            icon="bi-exclamation-triangle"
+            Icon={AlertTriangle}
             title="Couldn't load documents"
             message={error}
-            action={<Button variant="outline-primary" onClick={loadDocuments}>Try again</Button>}
+            action={
+              <Button variant="light" onClick={loadDocuments}>
+                Try again
+              </Button>
+            }
           />
         ) : !loading && result.documents.length === 0 ? (
           <EmptyState
-            icon={hasFilters ? "bi-funnel" : "bi-folder2-open"}
+            Icon={hasFilters ? Filter : FolderOpen}
             title={hasFilters ? "No documents match these filters" : "No documents yet"}
             message={
               hasFilters
-                ? "Try removing a filter or switching to All Divisions."
+                ? "Remove a filter or switch to All Divisions."
                 : "Upload the first document for your division. Scanned PDFs and images are read with OCR automatically."
             }
-            action={hasFilters ? <Button variant="outline-primary" onClick={clearFilters}>Clear filters</Button> : uploadButton}
+            action={
+              hasFilters ? (
+                <Button variant="light" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : (
+                uploadButton
+              )
+            }
           />
         ) : (
           <>
