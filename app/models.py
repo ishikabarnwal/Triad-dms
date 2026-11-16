@@ -66,3 +66,36 @@ def serialize_document(document, access=None, include_ocr_text=False):
     if include_ocr_text:
         body["ocr_text"] = document.get("ocr_text", "")
     return body
+
+
+def serialize_access_request(access_request, status):
+    """Public view of an access request. `status` is the live status (approvals past expiry show "expired")."""
+    request_id = str(access_request["_id"])
+    document_id = str(access_request["document_id"])
+
+    def user_id(key):
+        return str(access_request[key]) if access_request.get(key) else None
+
+    return {
+        "id": request_id,
+        "request_id": request_id,
+        "doc_id": document_id,
+        "document_id": document_id,
+        "document_title": access_request.get("document_title"),
+        "owner_division": access_request.get("owner_division"),
+        "requester_id": user_id("requester_id"),
+        "requester_name": access_request.get("requester_name"),
+        "requester_division": access_request.get("requester_division"),
+        "reason": access_request.get("reason"),
+        "status": status,
+        "decided_by": user_id("decided_by"),
+        "decided_by_name": access_request.get("decided_by_name"),
+        "decision_note": access_request.get("decision_note"),
+        "decided_at": isoformat(access_request.get("decided_at")),
+        "expires_at": isoformat(access_request.get("expires_at")),
+        "revoked_by": user_id("revoked_by"),
+        "revoked_by_name": access_request.get("revoked_by_name"),
+        "revoke_note": access_request.get("revoke_note"),
+        "revoked_at": isoformat(access_request.get("revoked_at")),
+        "created_at": isoformat(access_request.get("created_at")),
+    }
