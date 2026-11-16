@@ -33,6 +33,7 @@ def serialize_user(user):
         "division": user.get("division"),
         "role": user.get("role", "member"),
         "created_at": isoformat(user.get("created_at")),
+        "last_login_at": isoformat(user.get("last_login_at")),
     }
 
 
@@ -98,4 +99,57 @@ def serialize_access_request(access_request, status):
         "revoke_note": access_request.get("revoke_note"),
         "revoked_at": isoformat(access_request.get("revoked_at")),
         "created_at": isoformat(access_request.get("created_at")),
+    }
+
+
+def serialize_field(field, options, usage_count=None):
+    """Public view of a metadata field. `options` is the resolved list (division names for the division field)."""
+    body = {
+        "id": str(field["_id"]),
+        "key": field["key"],
+        "label": field.get("label") or field["key"],
+        "type": field.get("type", "text"),
+        "options": options,
+        "required": field.get("required", False),
+        "filterable": field.get("filterable", True),
+        "searchable": field.get("searchable", True),
+        "order": field.get("order", 0),
+        "source": field.get("source"),
+        "locked": field.get("locked", False),
+        "active": field.get("active", True),
+    }
+    if usage_count is not None:
+        body["usage_count"] = usage_count
+        body["created_at"] = isoformat(field.get("created_at"))
+        body["updated_at"] = isoformat(field.get("updated_at"))
+    return body
+
+
+def serialize_division(division, counts=None):
+    """Public view of a division. `counts` adds user and document totals for the admin page."""
+    body = {
+        "id": str(division["_id"]),
+        "name": division["name"],
+        "code": division.get("code"),
+        "description": division.get("description"),
+    }
+    if counts is not None:
+        body.update(counts)
+        body["created_at"] = isoformat(division.get("created_at"))
+    return body
+
+
+def serialize_audit(entry):
+    """Public view of an audit log entry."""
+    return {
+        "id": str(entry["_id"]),
+        "actor_id": entry.get("actor_id"),
+        "actor_name": entry.get("actor_name"),
+        "action": entry.get("action"),
+        "target_type": entry.get("target_type"),
+        "target_id": entry.get("target_id"),
+        "division": entry.get("division"),
+        "details": entry.get("details") or {},
+        "ip": entry.get("ip"),
+        "created_at": isoformat(entry.get("created_at")),
     }
