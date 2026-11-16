@@ -1,67 +1,79 @@
-import { ClipboardList, KeyRound, ScanSearch, Settings2, ShieldCheck, SlidersHorizontal } from "lucide-react";
+// Everything here describes what the system really does; numbers match the backend defaults
+// (MAX_UPLOAD_MB=25, OCR_MAX_PAGES=25, six accepted file formats).
 
-// Everything here describes what the system really does; numbers match the backend defaults.
+export const NAV_SECTIONS = [
+  { id: "features", label: "Features" },
+  { id: "how-it-works", label: "How it works" },
+  { id: "security", label: "Security" },
+  { id: "faq", label: "FAQ" },
+];
 
-export const FEATURES = [
-  {
-    Icon: SlidersHorizontal,
-    title: "Dynamic metadata",
-    text: "Admins define fields like Report Type or Classification. Upload forms and filters update at once.",
-    stat: "4 field types",
-  },
-  {
-    Icon: ShieldCheck,
-    title: "Division isolation",
-    text: "People open files from their own division only. Everything else is locked by default.",
-    stat: "Locked by default",
-  },
-  {
-    Icon: KeyRound,
-    title: "Cross-division access requests",
-    text: "Ask the owning division for one specific file. They approve for a set number of days, or reject.",
-    stat: "Up to 365-day expiry",
-    dark: true,
-  },
-  {
-    Icon: ScanSearch,
-    title: "OCR text search",
-    text: "Scanned PDFs and images are read with Tesseract, so the words inside them can be searched.",
-    stat: "6 file formats",
-  },
-  {
-    Icon: ClipboardList,
-    title: "Audit trail",
-    text: "Uploads, downloads, approvals, rejections and failed logins are recorded with who, when and where.",
-    stat: "Every action",
-  },
-  {
-    Icon: Settings2,
-    title: "Admin control",
-    text: "Add divisions, edit fields and change user roles from one Settings page.",
-    stat: "Super admin only",
-  },
+export const MARQUEE = [
+  "PDF",
+  "PNG",
+  "JPG",
+  "TIFF",
+  "BMP",
+  "WEBP",
+  "OCR · TESSERACT 5",
+  "PYMUPDF",
+  "RBAC",
+  "DIVISION ISOLATION",
+  "GRIDFS",
+  "MONGODB",
+  "JWT",
+  "BCRYPT",
+  "AUDIT LOG",
+  "RATE LIMITING",
+  "EXPIRING ACCESS",
+  "FULL-TEXT SEARCH",
+];
+
+export const PIPELINE = [
+  { code: "IN.01", title: "Upload", detail: "PDF or image, type checked from content" },
+  { code: "OCR.02", title: "OCR engine", detail: "PyMuPDF text layer, Tesseract for scans" },
+  { code: "DB.03", title: "MongoDB / GridFS", detail: "File in GridFS, metadata in MongoDB" },
+  { code: "IDX.04", title: "Search index", detail: "Text index plus partial-word matching" },
+  { code: "OUT.05", title: "Authorised user", detail: "Division or approved request only" },
 ];
 
 export const STEPS = [
-  { title: "Upload", text: "Drop a PDF or image and fill in the metadata. It's filed under your division." },
-  { title: "OCR reads it", text: "Text is extracted in seconds, so the document can be found by what it says." },
-  { title: "Request access", text: "Other divisions see the title and metadata, and can ask for the file." },
-  { title: "Approve & download", text: "The owner approves, with an optional expiry. Access can be revoked at any time." },
+  {
+    number: "01",
+    title: "Upload",
+    text: "Drop a PDF or image and fill in the metadata your admin defined. It's filed under your division automatically.",
+  },
+  {
+    number: "02",
+    title: "OCR reads it",
+    text: "The text layer is read directly; scanned pages go through Tesseract. The document becomes searchable by what it says.",
+  },
+  {
+    number: "03",
+    title: "Request access",
+    text: "Other divisions see the title and metadata, never the contents. One click asks the owning division for the file.",
+  },
+  {
+    number: "04",
+    title: "Approve & download",
+    text: "The owner approves for 7 or 30 days, or rejects. Access can be revoked at any time, and every step is logged.",
+  },
 ];
 
-export const SECURITY_POINTS = [
-  { title: "Division isolation", text: "Files, previews and OCR text are only served to the owning division." },
-  { title: "Expiring access", text: "Approvals can end after 7 or 30 days, or any length up to a year." },
-  { title: "Instant revocation", text: "The owner can withdraw access; the file locks on the next request." },
-  { title: "Rate-limited login", text: "Repeated failed sign-ins from one address are slowed down." },
-  { title: "Audit logs", text: "Every sensitive action is written down, including the ones that were refused." },
+export const SECURITY_FACTS = [
+  { code: "SEC.01", title: "Division isolation", text: "Files, previews and OCR text are served to the owning division only." },
+  { code: "SEC.02", title: "Expiring access", text: "Approvals can end after a set number of days, up to a year." },
+  { code: "SEC.03", title: "Revocation", text: "The owner can withdraw access. The file locks on the next request." },
+  { code: "SEC.04", title: "Rate-limited login", text: "Repeated failed sign-ins from one address are slowed down." },
+  { code: "SEC.05", title: "Audit trail", text: "Uploads, downloads, decisions and refusals are all recorded." },
+  { code: "SEC.06", title: "Content-type verification", text: "File types are read from the bytes, not trusted from the name." },
 ];
 
 export const NUMBERS = [
-  { value: 6, label: "File formats supported", detail: "PDF, PNG, JPG, TIFF, BMP, WEBP" },
-  { value: 25, suffix: " MB", label: "Maximum file size", detail: "Per upload, configurable" },
-  { value: 25, label: "Scanned pages OCR'd", detail: "Per upload, configurable" },
-  { value: 100, suffix: "%", label: "Sensitive actions logged", detail: "Uploads, downloads, decisions" },
+  { value: 6, label: "File formats", detail: "PDF PNG JPG TIFF BMP WEBP" },
+  { value: 25, suffix: " MB", label: "Max file size", detail: "Per upload, configurable" },
+  { value: 25, label: "Pages OCR'd", detail: "Scanned pages per upload" },
+  { value: 100, suffix: "%", label: "Actions logged", detail: "Uploads, downloads, decisions" },
 ];
 
 export const FAQS = [
