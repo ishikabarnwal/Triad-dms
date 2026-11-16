@@ -73,4 +73,9 @@ class Config:
     LOGIN_RATE_LIMIT = env_str("LOGIN_RATE_LIMIT", "10 per minute")
 
     TESSERACT_CMD = env_str("TESSERACT_CMD")
+    OCR_ENABLED = env_bool("OCR_ENABLED", True)
+    OCR_LANGUAGES = env_str("OCR_LANGUAGES", "eng")
+    # Caps how many scanned pages one upload can send through tesseract, so a huge scan can't stall a worker.
+    OCR_MAX_PAGES = env_int("OCR_MAX_PAGES", 25)
+    OCR_PAGE_TIMEOUT = env_int("OCR_PAGE_TIMEOUT", 60)
     SEMANTIC_SEARCH_ENABLED = env_bool("SEMANTIC_SEARCH_ENABLED", False)
