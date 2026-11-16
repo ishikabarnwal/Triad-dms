@@ -1,0 +1,597 @@
+// Triad DMS theme. Brand colours live here and only here.
+// Indigo for every interactive element, deep plum for the app chrome, greys for
+// everything else, and Bootstrap's red only for errors and destructive actions.
+
+$primary: #605be5;
+$plum: #2a0831;
+$ink: #222222;
+
+// Map Bootstrap's other semantic colours onto the brand so no stray green/yellow/cyan appears.
+$success: $primary;
+$info: $primary;
+$warning: #6c6a78;
+$secondary: #6c6a78;
+
+$body-color: $ink;
+$body-bg: #ffffff;
+$font-family-sans-serif: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-size-base: 0.9375rem;
+$headings-font-weight: 600;
+$headings-color: $ink;
+
+$border-radius: 0.625rem;
+$border-radius-sm: 0.5rem;
+$border-radius-lg: 0.875rem;
+$border-color: #e8e7ef;
+
+$box-shadow-sm: 0 1px 2px rgba($plum, 0.05), 0 1px 3px rgba($plum, 0.05);
+$box-shadow: 0 4px 16px rgba($plum, 0.07);
+$box-shadow-lg: 0 12px 40px rgba($plum, 0.12);
+
+$link-decoration: none;
+$input-btn-padding-y: 0.55rem;
+$input-btn-padding-x: 1rem;
+$input-focus-border-color: mix($primary, #ffffff, 55%);
+$input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.15);
+$btn-font-weight: 500;
+$card-border-color: $border-color;
+$card-cap-bg: transparent;
+$table-cell-padding-y: 0.8rem;
+$table-cell-padding-x: 0.75rem;
+$badge-font-weight: 500;
+$badge-padding-y: 0.4em;
+$badge-padding-x: 0.7em;
+$modal-content-border-radius: 1rem;
+$toast-border-radius: 0.75rem;
+$offcanvas-horizontal-width: 280px;
+
+@import "bootstrap/scss/bootstrap";
+
+$workspace-bg: #f6f6fa;
+$muted: #6c6a78;
+$sidebar-width: 264px;
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+.bg-plum {
+  background-color: $plum !important;
+}
+
+.text-plum {
+  color: $plum !important;
+}
+
+.text-muted-soft {
+  color: $muted !important;
+}
+
+.fw-medium {
+  font-weight: 500 !important;
+}
+
+// ---- logo ----
+
+// The logo has black lettering, so on plum it sits on a white tile.
+.logo-tile {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 0.45rem 0.75rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+
+  img {
+    display: block;
+    height: 34px;
+    width: auto;
+  }
+
+  &.logo-tile-lg img {
+    height: 52px;
+  }
+}
+
+// ---- app shell ----
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: $workspace-bg;
+}
+
+// The plum column stretches with the page; the menu inside it stays put while the page scrolls.
+.sidebar {
+  flex: 0 0 $sidebar-width;
+  width: $sidebar-width;
+  background: $plum;
+  color: rgba(#ffffff, 0.85);
+
+  .sidebar-inner {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem 1rem;
+}
+
+.sidebar-product {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(#ffffff, 0.55);
+}
+
+.sidebar-nav {
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.25rem;
+    border-radius: $border-radius;
+    color: rgba(#ffffff, 0.72);
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    .bi {
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      color: #ffffff;
+      background: rgba(#ffffff, 0.06);
+    }
+
+    &.active {
+      color: #ffffff;
+      background: rgba($primary, 0.28);
+      box-shadow: inset 3px 0 0 $primary;
+    }
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    min-width: 1.6rem;
+    background: $primary;
+    color: #ffffff;
+  }
+}
+
+.sidebar-user {
+  border-top: 1px solid rgba(#ffffff, 0.1);
+  padding-top: 1rem;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.4rem;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: $primary;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.sidebar-offcanvas {
+  background: $plum;
+  color: rgba(#ffffff, 0.85);
+
+  .offcanvas-body {
+    padding: 0;
+  }
+}
+
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: $plum;
+}
+
+.app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.workspace {
+  padding: 2rem 2.25rem 3rem;
+  max-width: 1440px;
+
+  @include media-breakpoint-down(md) {
+    padding: 1.25rem 1rem 2rem;
+  }
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+
+  h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+  }
+}
+
+// ---- cards ----
+
+.surface {
+  background: #ffffff;
+  border: 1px solid $border-color;
+  border-radius: 1rem;
+  box-shadow: $box-shadow-sm;
+}
+
+.stat-card {
+  padding: 1.1rem 1.25rem;
+  height: 100%;
+
+  // Icon above the number on phones, beside it from sm up.
+  @include media-breakpoint-down(sm) {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 3rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.85rem;
+    background: rgba($primary, 0.1);
+    color: $primary;
+    font-size: 1.3rem;
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+
+  .stat-label {
+    color: $muted;
+    font-size: 0.85rem;
+  }
+
+  .stat-hint {
+    color: $muted;
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+}
+
+// ---- filter bar ----
+
+.filter-bar {
+  padding: 1rem 1.25rem;
+
+  .form-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.3rem;
+  }
+}
+
+// The filter fields fold away behind a button on phones but are always visible from md up.
+.filter-fields.collapse:not(.show) {
+  @include media-breakpoint-up(md) {
+    display: block;
+  }
+}
+
+.scope-toggle .btn {
+  min-width: 8.5rem;
+}
+
+// ---- documents table ----
+
+.documents-table {
+  margin-bottom: 0;
+
+  thead th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $muted;
+    background: #fbfbfd;
+    border-bottom-width: 1px;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover td {
+      background: rgba($primary, 0.035);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary;
+      outline-offset: -2px;
+    }
+  }
+
+  td {
+    vertical-align: middle;
+    border-color: #f0eff5;
+  }
+}
+
+.file-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.6rem;
+  background: rgba($primary, 0.1);
+  color: $primary;
+  font-size: 1.1rem;
+}
+
+.doc-title {
+  font-weight: 500;
+  color: $ink;
+}
+
+.badge-division {
+  background: rgba($plum, 0.08);
+  color: $plum;
+}
+
+.badge-value {
+  background: #f1f0f6;
+  color: #45434f;
+}
+
+.badge-soft-primary {
+  background: rgba($primary, 0.12);
+  color: shade-color($primary, 25%);
+}
+
+.badge-soft-grey {
+  background: #eeedf2;
+  color: #55535f;
+}
+
+.badge-soft-danger {
+  background: rgba($danger, 0.1);
+  color: shade-color($danger, 15%);
+}
+
+.badge-locked {
+  background: $plum;
+  color: #ffffff;
+}
+
+// ---- skeletons and empty states ----
+
+.skeleton {
+  display: inline-block;
+  height: 0.85rem;
+  border-radius: 0.4rem;
+  background: linear-gradient(90deg, #efeef4 25%, #f7f7fa 50%, #efeef4 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.empty-state {
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+
+  .empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: rgba($primary, 0.1);
+    color: $primary;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+}
+
+// ---- upload ----
+
+.dropzone {
+  border: 2px dashed #d6d4e3;
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #fbfbfd;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover,
+  &.is-active {
+    border-color: $primary;
+    background: rgba($primary, 0.04);
+  }
+
+  &.is-rejected {
+    border-color: $danger;
+  }
+
+  .dropzone-icon {
+    font-size: 2.2rem;
+    color: $primary;
+  }
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid $border-color;
+  border-radius: 0.85rem;
+}
+
+.scan-state {
+  padding: 2.5rem 1rem;
+  text-align: center;
+
+  .scan-icon {
+    font-size: 2.4rem;
+    color: $primary;
+    animation: scan-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes scan-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+// ---- toasts ----
+
+.app-toast {
+  border: 0;
+  box-shadow: $box-shadow-lg;
+  border-left: 4px solid $primary;
+  min-width: 300px;
+
+  &.app-toast-danger {
+    border-left-color: $danger;
+  }
+}
+
+// ---- auth pages ----
+
+.auth-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-brand {
+  position: relative;
+  flex: 0 0 46%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+  background:
+    radial-gradient(circle at 15% 10%, rgba($primary, 0.35), transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba($primary, 0.22), transparent 40%),
+    $plum;
+  color: #ffffff;
+  overflow: hidden;
+
+  h1 {
+    color: #ffffff;
+    font-size: 2.2rem;
+  }
+
+  .auth-tagline {
+    color: rgba(#ffffff, 0.75);
+    font-size: 1.05rem;
+    max-width: 30rem;
+  }
+
+  .auth-feature {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+
+    .auth-feature-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 2.6rem;
+      height: 2.6rem;
+      border-radius: 0.75rem;
+      background: rgba(#ffffff, 0.1);
+      color: #ffffff;
+      font-size: 1.15rem;
+    }
+
+    p {
+      color: rgba(#ffffff, 0.65);
+      font-size: 0.875rem;
+      margin: 0;
+    }
+  }
+}
+
+.auth-form-side {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background: $workspace-bg;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem;
+
+  @include media-breakpoint-down(sm) {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
+.auth-mobile-brand {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: $plum;
+}
+
+.full-page-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: $workspace-bg;
+}
