@@ -1,5 +1,5 @@
 import { ArrowCounterClockwise, CheckCircle, ClockCounterClockwise, Key, UploadSimple, XCircle } from "@phosphor-icons/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import useDivisionCodes from "@/hooks/useDivisions";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/utils/format";
@@ -16,12 +16,15 @@ const KINDS = {
 };
 
 function ActivityRow({ event, code }) {
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}`;
   const kind = KINDS[event.kind] || KINDS.upload;
   const { Icon } = kind;
   return (
     <li>
       <Link
         to={`/documents/${event.document_id}`}
+        state={{ from }}
         className="-mx-2 flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-lavender/70"
       >
         <span

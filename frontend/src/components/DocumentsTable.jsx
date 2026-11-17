@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, CaretUpDown, Columns } from "@phosphor-icons/react"
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { columnFields } from "@/utils/fields";
 import { formatBytes, formatDate, NOT_SET } from "@/utils/format";
@@ -166,7 +166,9 @@ export function useDocumentsTable({ documents, fields, sort, order }) {
 /** Clicking a sortable header calls onSortChange(sortKey, order) and the parent refetches. */
 export default function DocumentsTable({ table, loading, sort, order, onSortChange }) {
   const navigate = useNavigate();
-  const open = (id) => navigate(`/documents/${id}`);
+  const location = useLocation();
+  // The details page's back link returns here with the same filters, sort and page.
+  const open = (id) => navigate(`/documents/${id}`, { state: { from: `${location.pathname}${location.search}` } });
   const headers = table.getHeaderGroups()[0].headers;
 
   const toggleSort = (sortKey) => {
