@@ -15,6 +15,17 @@ export const Input = forwardRef(function Input({ className, invalid, ...props },
   );
 });
 
+export const Textarea = forwardRef(function Textarea({ className, invalid, ...props }, ref) {
+  return (
+    <textarea
+      ref={ref}
+      aria-invalid={invalid || undefined}
+      className={cn(fieldBase, "min-h-24 resize-y py-2.5 leading-6", invalid ? "border-danger" : "border-line", className)}
+      {...props}
+    />
+  );
+});
+
 /** A styled native select: fully accessible and works the same on every device. */
 export const NativeSelect = forwardRef(function NativeSelect({ className, invalid, children, ...props }, ref) {
   return (

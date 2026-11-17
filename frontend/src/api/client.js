@@ -78,4 +78,17 @@ export function errorInfo(error) {
   return { status: response?.status, code: data.error, message, fieldErrors, data };
 }
 
+/** errorInfo for requests made with responseType "blob", whose JSON error bodies arrive as a Blob. */
+export async function blobErrorInfo(error) {
+  const data = error?.response?.data;
+  if (!(data instanceof Blob)) {
+    return errorInfo(error);
+  }
+  try {
+    return errorInfo({ response: { ...error.response, data: JSON.parse(await data.text()) } });
+  } catch {
+    return errorInfo({ response: { ...error.response, data: {} } });
+  }
+}
+
 export default client;

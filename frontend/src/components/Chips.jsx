@@ -1,4 +1,18 @@
-import { Check, FileImage, FilePdf, Hourglass, Lock, LockOpen, Minus, ShieldCheck, UserCheck, Warning } from "@phosphor-icons/react";
+import {
+  Check,
+  ClockCounterClockwise,
+  FileImage,
+  FilePdf,
+  Hourglass,
+  Lock,
+  LockOpen,
+  Minus,
+  Prohibit,
+  ShieldCheck,
+  UserCheck,
+  Warning,
+  XCircle,
+} from "@phosphor-icons/react";
 import useDivisionCodes from "@/hooks/useDivisions";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "./ui/tooltip";
@@ -38,6 +52,24 @@ const ACCESS = {
   expired: { label: "Locked", Icon: Lock, tone: "grey", tip: "Your access expired. You can ask again." },
   none: { label: "Locked", Icon: Lock, tone: "grey", tip: "Belongs to another division. Request access to open it." },
 };
+
+const REQUEST = {
+  pending: { label: "Pending", Icon: Hourglass, tone: "outline" },
+  approved: { label: "Approved", Icon: LockOpen, tone: "primary" },
+  rejected: { label: "Rejected", Icon: XCircle, tone: "grey" },
+  revoked: { label: "Revoked", Icon: Prohibit, tone: "grey" },
+  expired: { label: "Expired", Icon: ClockCounterClockwise, tone: "grey" },
+};
+
+/** Status of one access request, as the reviewing division sees it. */
+export function RequestStatusChip({ status }) {
+  const config = REQUEST[status] || REQUEST.pending;
+  return (
+    <Chip Icon={config.Icon} tone={config.tone}>
+      {config.label}
+    </Chip>
+  );
+}
 
 const OCR = {
   done: { label: "Text ready", Icon: Check, tone: "primary", tip: "Text extracted and searchable." },
