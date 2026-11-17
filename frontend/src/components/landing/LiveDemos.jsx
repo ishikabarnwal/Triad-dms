@@ -9,46 +9,6 @@ import { useProgress, useSequence } from "./shared";
 
 // Demo data only: these components show how the real UI behaves.
 
-const OCR_STEPS = [700, 2200, 3400];
-
-/** File card whose OCR progress fills, then flips to "OCR.OK". */
-export function OcrScanCard({ className }) {
-  const step = useSequence(OCR_STEPS);
-  const progress = useProgress(step === 1);
-  const done = step === 2;
-  return (
-    <div className={cn("card w-72 p-4", className)}>
-      <div className="flex items-center gap-3">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <FileText className="size-4" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium">Fleet Maintenance Report.pdf</div>
-          <div className="font-mono text-[10.5px] text-muted uppercase">DIV-A · 2.4 MB · 3 pages</div>
-        </div>
-      </div>
-      <div className="mt-4 h-6">
-        {done ? (
-          <div className="flex items-center justify-between">
-            <Chip tone="primary" mono Icon={Check}>
-              OCR.OK
-            </Chip>
-            <span className="font-mono text-[10.5px] text-muted">1,842 WORDS</span>
-          </div>
-        ) : (
-          <div>
-            <div className="label-mono mb-1.5 flex justify-between text-muted">
-              <span>Scanning…</span>
-              <span>{progress}%</span>
-            </div>
-            <Progress value={progress} label="OCR progress" />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 const ACCESS_STEPS = [2400, 500, 3200];
 
 /** Access request that gets approved, on a loop. */

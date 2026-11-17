@@ -8,7 +8,7 @@ import Logo from "../Logo";
 import { Button, ButtonArrow } from "../ui/button";
 import { NAV_SECTIONS } from "./content";
 
-/** Floating pill navbar that tightens after the page scrolls; a slide-down menu on phones. */
+/** Floating navbar that tightens after the page scrolls; a slide-down menu on phones. */
 export default function LandingNav() {
   const { user } = useAuth();
   const [compact, setCompact] = useState(false);
@@ -26,7 +26,7 @@ export default function LandingNav() {
       <nav
         aria-label="Main"
         className={cn(
-          "mx-auto flex items-center justify-between gap-4 rounded-full border border-line bg-white/85 backdrop-blur-md transition-all duration-300",
+          "mx-auto flex items-center justify-between gap-4 rounded-2xl border border-line bg-white transition-all duration-300",
           compact ? "max-w-4xl py-1.5 pr-1.5 pl-4 shadow-lift" : "max-w-6xl py-2.5 pr-2.5 pl-5 shadow-soft",
         )}
       >
@@ -39,7 +39,7 @@ export default function LandingNav() {
             <a
               key={section.id}
               href={`#${section.id}`}
-              className="rounded-full px-3.5 py-2 text-sm text-muted transition-colors hover:bg-lavender hover:text-ink"
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-lavender hover:text-ink"
             >
               {section.label}
             </a>
@@ -60,7 +60,7 @@ export default function LandingNav() {
               </Link>
               <Button asChild size="sm">
                 <Link to="/signup">
-                  Get started <ButtonArrow />
+                  Create an account <ButtonArrow />
                 </Link>
               </Button>
             </>
