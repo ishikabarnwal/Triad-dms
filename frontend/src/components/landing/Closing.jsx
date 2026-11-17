@@ -84,8 +84,8 @@ export function Numbers() {
         <SectionIntro eyebrow="Limits" titleId="numbers-title" title="The rules, read from the running system." />
         <Reveal className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
           {numbers.map((number) => (
-            <div key={number.label} className="bg-white p-6 sm:p-8">
-              <p className="text-[2rem] leading-none font-bold tracking-[-0.03em] tabular-nums sm:text-[2.5rem]">
+            <div key={number.label} className="bg-white p-5 sm:p-8">
+              <p className="text-[1.625rem] leading-none font-bold tracking-[-0.03em] whitespace-nowrap tabular-nums sm:text-[2.5rem]">
                 {number.value}
                 {number.suffix}
               </p>
