@@ -239,9 +239,11 @@ export default function SearchPage() {
 
       {!idle && !state.loading && !state.error && !fieldsLoading && (
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <p className="text-sm text-muted" aria-live="polite">
-            {summaryLine(state.total, query)}
-          </p>
+          {state.total > 0 && (
+            <p className="text-sm text-muted" aria-live="polite">
+              {summaryLine(state.total, query)}
+            </p>
+          )}
           <ActiveFilterChips chips={chips} onRemove={(key) => setFilter(key, null)} />
         </div>
       )}

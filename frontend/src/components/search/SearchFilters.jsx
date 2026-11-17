@@ -1,4 +1,5 @@
-import { X } from "@phosphor-icons/react";
+import { SlidersHorizontal, X } from "@phosphor-icons/react";
+import { useState } from "react";
 import { useDivisionNames } from "@/hooks/useDivisions";
 import { cn } from "@/lib/utils";
 import { isDivisionField } from "@/utils/fields";
@@ -81,6 +82,7 @@ function SelectFilter({ label, value, onChange, children }) {
 /** Division, every filterable metadata field, upload date range and text status. */
 export default function SearchFilters({ fields, values, loading, onChange, onClear }) {
   const divisions = useDivisionNames();
+  const [open, setOpen] = useState(false);
 
   if (loading) {
     return (
@@ -92,36 +94,51 @@ export default function SearchFilters({ fields, values, loading, onChange, onCle
     );
   }
 
-  const anyActive = filterKeys(fields).some((key) => values[key]);
+  const activeCount = filterKeys(fields).filter((key) => values[key]).length;
+  const anyActive = activeCount > 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
-      <SelectFilter label="Division" value={values[DIVISION_KEY] || ""} onChange={(value) => onChange(DIVISION_KEY, value)}>
-        <option value="">Any division</option>
-        {divisions.map((name) => (
-          <option key={name} value={name}>
-            {name}
-          </option>
+    <div>
+      {/* On phones the filters fold behind one button so results start near the top. */}
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-controls="search-filters"
+        className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-line bg-white px-4 text-sm font-semibold sm:hidden"
+      >
+        <SlidersHorizontal className="size-4" aria-hidden="true" />
+        Filters
+        {anyActive && <span className="rounded-md bg-primary px-1.5 py-0.5 text-xs leading-none text-white">{activeCount}</span>}
+      </button>
+      <div id="search-filters" className={cn("flex-wrap items-center gap-2 sm:flex", open ? "mt-3 flex sm:mt-0" : "hidden")} role="group" aria-label="Filters">
+        <SelectFilter label="Division" value={values[DIVISION_KEY] || ""} onChange={(value) => onChange(DIVISION_KEY, value)}>
+          <option value="">Any division</option>
+          {divisions.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </SelectFilter>
+        {metadataFilterFields(fields).map((field) => (
+          <FieldFilter key={field.id} field={field} value={values[field.key] || ""} onChange={onChange} />
         ))}
-      </SelectFilter>
-      {metadataFilterFields(fields).map((field) => (
-        <FieldFilter key={field.id} field={field} value={values[field.key] || ""} onChange={onChange} />
-      ))}
-      <DateBox label="Uploaded from" value={values[DATE_FROM_KEY] || ""} onChange={(value) => onChange(DATE_FROM_KEY, value)} />
-      <DateBox label="to" value={values[DATE_TO_KEY] || ""} onChange={(value) => onChange(DATE_TO_KEY, value)} />
-      <SelectFilter label="Text status" value={values[OCR_KEY] || ""} onChange={(value) => onChange(OCR_KEY, value)}>
-        <option value="">Any text status</option>
-        {Object.entries(OCR_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </SelectFilter>
-      {anyActive && (
-        <button type="button" onClick={onClear} className="cursor-pointer px-2 text-sm font-semibold text-primary hover:underline">
-          Clear filters
-        </button>
-      )}
+        <DateBox label="Uploaded from" value={values[DATE_FROM_KEY] || ""} onChange={(value) => onChange(DATE_FROM_KEY, value)} />
+        <DateBox label="to" value={values[DATE_TO_KEY] || ""} onChange={(value) => onChange(DATE_TO_KEY, value)} />
+        <SelectFilter label="Text status" value={values[OCR_KEY] || ""} onChange={(value) => onChange(OCR_KEY, value)}>
+          <option value="">Any text status</option>
+          {Object.entries(OCR_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </SelectFilter>
+        {anyActive && (
+          <button type="button" onClick={onClear} className="cursor-pointer px-2 text-sm font-semibold text-primary hover:underline">
+            Clear filters
+          </button>
+        )}
+      </div>
     </div>
   );
 }
