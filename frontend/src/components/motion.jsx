@@ -3,15 +3,18 @@ import { useEffect, useRef, useState } from "react";
 
 const EASE = [0.22, 1, 0.36, 1];
 
-/** Fades and lifts its children into view the first time they scroll on screen. */
-export function Reveal({ children, delay = 0, y = 20, className, style, as = "div" }) {
+/**
+ * Lifts its children into place the first time they scroll on screen. It only moves them, never
+ * hides them: full-page screenshots and print are taken without scrolling, and must not come out blank.
+ */
+export function Reveal({ children, delay = 0, y = 16, className, style, as = "div" }) {
   const Component = motion[as];
   return (
     <Component
       className={className}
       style={style}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ y }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.55, delay, ease: EASE }}
     >
