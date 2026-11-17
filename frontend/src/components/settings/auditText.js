@@ -21,6 +21,9 @@ const FAILURES = {
 
 export const failureLabel = (action) => FAILURES[action] || null;
 
+/** Whether an entry is about a document, so its owning division is worth showing beside the sentence. */
+export const concernsDocument = (entry) => entry.target_type === "document" || Boolean(entry.details?.document_id);
+
 /** The document an entry is about, if any: its id and the best title we have. */
 function documentOf(entry) {
   const details = entry.details || {};

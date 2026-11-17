@@ -145,6 +145,7 @@ def serialize_audit(entry):
         "id": str(entry["_id"]),
         "actor_id": entry.get("actor_id"),
         "actor_name": entry.get("actor_name"),
+        "actor_division": entry.get("actor_division"),
         "action": entry.get("action"),
         "target_type": entry.get("target_type"),
         "target_id": entry.get("target_id"),

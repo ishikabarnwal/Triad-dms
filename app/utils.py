@@ -249,11 +249,14 @@ def client_ip():
 def write_audit(action, actor=None, target_type=None, target_id=None, division=None, details=None):
     """Record an action in audit_logs.
 
+    `division` is the division the action concerns (a document's owner, say), which the audit
+    filter matches on. `actor_division` is the actor's own division at the time, for display.
     A failed audit write is logged but never fails the request it describes.
     """
     entry = {
         "actor_id": str(actor["_id"]) if actor else None,
         "actor_name": actor.get("name") if actor else None,
+        "actor_division": actor.get("division") if actor else None,
         "action": action,
         "target_type": target_type,
         "target_id": str(target_id) if target_id else None,

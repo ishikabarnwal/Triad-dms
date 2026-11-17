@@ -445,6 +445,17 @@ def test_admin_errors_name_the_input_they_belong_to(api, upload, tokens):
     assert taken_code["field"] == "code"
 
 
+def test_audit_entries_keep_actor_and_target_divisions_apart(api, client, upload, tokens):
+    doc_id = upload(FAKE_PDF, title="Owned By A", headers=tokens["a"]).get_json()["id"]
+    client.get(f"/api/documents/{doc_id}/download", headers=tokens["b"])
+
+    denied = api.get("/audit-logs?action=document.download_denied").get_json()["logs"][0]
+
+    assert denied["actor_name"] == "Bravo User"
+    assert denied["actor_division"] == "Division B"
+    assert denied["division"] == "Division A"
+
+
 def test_audit_log_by_actor_id_and_dates(api, tokens):
     bravo = api.get("/users?q=bravo").get_json()["users"][0]
     today, tomorrow = date.today(), date.today() + timedelta(days=1)

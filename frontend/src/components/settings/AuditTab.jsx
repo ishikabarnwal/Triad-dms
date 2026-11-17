@@ -14,7 +14,7 @@ import { Button } from "../ui/button";
 import { NativeSelect } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip } from "../ui/tooltip";
-import { ACTION_GROUPS, auditSentence, detailRows, failureLabel } from "./auditText";
+import { ACTION_GROUPS, auditSentence, concernsDocument, detailRows, failureLabel } from "./auditText";
 import DebouncedSearch from "./DebouncedSearch";
 
 const PAGE_SIZE = 25;
@@ -57,6 +57,8 @@ function EntryDetails({ entry }) {
     { label: "IP address", value: entry.ip || "Not recorded" },
     { label: "Action", value: entry.action },
     { label: "Target", value: entry.target_type ? `${entry.target_type} ${entry.target_id || ""}`.trim() : "None" },
+    { label: "Actor's division", value: entry.actor_division || "None" },
+    { label: "Target division", value: entry.division || "None" },
     { label: "Exact time", value: formatDateTime(entry.created_at) },
     ...detailRows(entry.details),
   ];
@@ -99,11 +101,13 @@ function EntryRow({ entry, open, onToggle, from }) {
         <td className="px-4 py-3.5">
           <div className="flex min-w-36 flex-col items-start gap-1">
             <span className={cn("font-semibold", !entry.actor_name && "text-muted")}>{entry.actor_name || "No signed in user"}</span>
-            {entry.division && <DivisionChip name={entry.division} />}
+            {/* The actor's own division; the division the action was about is shown with the sentence. */}
+            {entry.actor_division && <DivisionChip name={entry.actor_division} />}
           </div>
         </td>
         <td className="min-w-72 px-4 py-3.5">
           <Sentence entry={entry} from={from} />
+          {entry.division && concernsDocument(entry) && <p className="mt-0.5 text-xs text-muted">Document belongs to {entry.division}</p>}
         </td>
         <td className="px-5 py-3.5">
           <div className="flex items-center justify-end gap-2">
