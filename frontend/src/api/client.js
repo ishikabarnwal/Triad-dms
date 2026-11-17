@@ -78,6 +78,18 @@ export function errorInfo(error) {
   return { status: response?.status, code: data.error, message, fieldErrors, data };
 }
 
+/**
+ * Per-input messages for a form: Pydantic's per-field details, plus the single `field` the API
+ * names on its own validation errors (such as a duplicate key). Empty when the error isn't about an input.
+ */
+export function inputErrors(info) {
+  const errors = { ...info.fieldErrors };
+  if (info.data?.field && !errors[info.data.field]) {
+    errors[info.data.field] = info.message;
+  }
+  return errors;
+}
+
 /** errorInfo for requests made with responseType "blob", whose JSON error bodies arrive as a Blob. */
 export async function blobErrorInfo(error) {
   const data = error?.response?.data;

@@ -4,6 +4,11 @@ import { getDivisions } from "../api/auth";
 // Divisions rarely change; one request is shared by every chip on the page.
 let cached = null;
 
+/** Forget the cached divisions, e.g. after an admin adds or renames one. */
+export function invalidateDivisions() {
+  cached = null;
+}
+
 function loadDivisions() {
   if (!cached) {
     cached = getDivisions()

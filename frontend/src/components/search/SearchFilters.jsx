@@ -52,7 +52,7 @@ export function activeFilters(values, fields) {
 }
 
 /** A labelled date box, matching the date filters on the dashboard. */
-function DateBox({ label, value, onChange }) {
+export function DateBox({ label, value, onChange }) {
   return (
     <label
       className={cn(
