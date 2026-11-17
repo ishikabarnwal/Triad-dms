@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "group inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap transition-[background-color,color,border-color,transform] duration-150 select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
+  "group inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-[background-color,color,border-color,transform] duration-150 select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -29,7 +29,7 @@ export const buttonVariants = cva(
   },
 );
 
-/** Pill button. `asChild` renders the styles on a child element such as a router Link. */
+/** Button with 8px corners. `asChild` renders the styles on a child element such as a router Link. */
 export const Button = forwardRef(function Button({ className, variant, size, asChild = false, ...props }, ref) {
   const Component = asChild ? Slot : "button";
   return <Component ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />;

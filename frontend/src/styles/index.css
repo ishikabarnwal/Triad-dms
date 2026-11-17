@@ -1,6 +1,5 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/manrope/wght.css";
 
 /*
  * Triad DMS design tokens. These are the only colours that exist: Tailwind's default
@@ -15,15 +14,16 @@
   --color-plum: #2a0831;
   --color-plum-hover: #3a1043;
   --color-lavender: #f3f2fd;
-  --color-ink: #0a0a0a;
+  --color-ink: #111111;
   --color-muted: #6b6b80;
   --color-line: #e7e5f5;
   --color-danger: #dc2626;
 
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* One family everywhere: the "mono" labels are Manrope too, uppercase with tabular figures. */
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --radius-card: 1.25rem;
+  --radius-card: 1rem;
   --radius-panel: 1.5rem;
 
   --shadow-soft: 0 1px 2px rgb(42 8 49 / 0.04), 0 6px 20px rgb(42 8 49 / 0.04);
@@ -109,7 +109,6 @@
 
   body {
     @apply bg-lavender font-sans text-ink antialiased;
-    font-feature-settings: "ss01", "cv11";
   }
 
   ::selection {
@@ -139,6 +138,7 @@
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Huge, tight headline. */
@@ -174,13 +174,6 @@
     border-color: var(--color-primary);
     box-shadow: var(--shadow-lift);
   }
-}
-
-/* Solid dot grid drawn with an SVG tile (no gradient functions). Hero sections only. */
-@utility dot-grid {
-  background-color: var(--color-lavender);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.5' cy='1.5' r='1.1' fill='%23d6d3ee'/%3E%3C/svg%3E");
-  background-size: 22px 22px;
 }
 
 @utility dot-grid-dark {
