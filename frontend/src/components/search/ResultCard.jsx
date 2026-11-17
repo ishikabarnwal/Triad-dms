@@ -1,31 +1,12 @@
 import { EyeSlash, Hourglass, Key } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
+import { snippetParts } from "@/lib/snippet";
 import { columnFields } from "@/utils/fields";
 import { formatDate } from "@/utils/format";
 import { AccessChip, Chip, DivisionChip, FileIcon } from "../Chips";
 import { Button } from "../ui/button";
 
 const MAX_DETAIL_CHIPS = 4;
-
-/** Turn HTML entities back into characters. DOMParser builds an inert document, so nothing in it runs. */
-function decodeEntities(text) {
-  return new DOMParser().parseFromString(text, "text/html").documentElement.textContent;
-}
-
-/**
- * Split the API's snippet into plain text and highlighted parts. The API escapes everything except
- * its own <mark> tags; rendering the parts as React text (never as HTML) means any other markup
- * would show as harmless text even if it slipped through.
- */
-export function snippetParts(html) {
-  return html
-    .split(/(<mark>[\s\S]*?<\/mark>)/g)
-    .filter(Boolean)
-    .map((part) => {
-      const marked = part.startsWith("<mark>") && part.endsWith("</mark>");
-      return { marked, text: decodeEntities(marked ? part.slice(6, -7) : part) };
-    });
-}
 
 function Snippet({ html }) {
   return (
