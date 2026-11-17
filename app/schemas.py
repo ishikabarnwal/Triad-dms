@@ -16,6 +16,10 @@ from pydantic import (
     model_validator,
 )
 
+# Shared with GET /api/config/public, so the landing page quotes the same limits the API enforces.
+ACCESS_EXPIRY_MIN_DAYS = 1
+ACCESS_EXPIRY_MAX_DAYS = 365
+
 Trimmed = Annotated[str, StringConstraints(strip_whitespace=True)]
 Username = Annotated[
     str,
@@ -183,7 +187,7 @@ class AccessDecision(BaseModel):
 class AccessApproval(AccessDecision):
     """Body for approve. `expires_in_days` is optional; null or missing means access never expires."""
 
-    expires_in_days: int | None = Field(None, ge=1, le=365)
+    expires_in_days: int | None = Field(None, ge=ACCESS_EXPIRY_MIN_DAYS, le=ACCESS_EXPIRY_MAX_DAYS)
 
 
 class AccessListQuery(BaseModel):
