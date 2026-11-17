@@ -1,26 +1,33 @@
 import { useReducedMotion } from "framer-motion";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { NOT_SET } from "@/utils/format";
 import { Skeleton } from "./ui/skeleton";
 
 const INDIGO = "#605BE5";
+const INK = "#111111";
 const MUTED = "#6B6B80";
-const LINE = "#E7E5F5";
+const LAVENDER = "#F3F2FD";
+const FONT = "Manrope Variable, sans-serif";
 
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) {
     return null;
   }
+  const count = payload[0].value;
   return (
-    <div className="rounded-xl border border-line bg-white px-3 py-2 text-xs shadow-lift">
-      <div className="font-medium">{label}</div>
-      <div className="font-mono text-muted">
-        {payload[0].value} {payload[0].value === 1 ? "document" : "documents"}
-      </div>
+    <div className="rounded-lg border border-line bg-white px-3 py-2 text-xs shadow-soft">
+      <p className="font-semibold">{label}</p>
+      <p className="text-muted">
+        {count} {count === 1 ? "document" : "documents"}
+      </p>
     </div>
   );
 }
 
-/** Documents per option of one select field, from /api/stats `by_group`. */
+/**
+ * Documents per option of one select field, from /api/stats `by_group`. Horizontal bars with the
+ * count printed at the end of each, so no axis or grid lines are needed.
+ */
 export default function ReportChart({ group, loading }) {
   const reduced = useReducedMotion();
 
@@ -31,25 +38,33 @@ export default function ReportChart({ group, loading }) {
     return <p className="text-sm text-muted">Add a select field in Settings to see a breakdown here.</p>;
   }
 
-  const data = group.counts.map((row) => ({ name: row.value ?? "Not set", count: row.count }));
-  // Horizontal bars leave room for long option names.
-  const height = Math.max(180, data.length * 40);
+  const data = group.counts.map((row) => ({ name: row.value ?? NOT_SET, count: row.count }));
+  const summary = data.map((row) => `${row.name}: ${row.count}`).join(", ");
+  // Fills whatever height its card has, but never squeezes a bar below a readable size.
   return (
-    <div style={{ width: "100%", height }} role="img" aria-label={`Bar chart of documents by ${group.field}`}>
+    <div className="h-full w-full" style={{ minHeight: data.length * 36 }} role="img" aria-label={`Documents by ${group.field}. ${summary}`}>
       <ResponsiveContainer>
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 4 }} barCategoryGap={8}>
-          <CartesianGrid horizontal={false} stroke={LINE} />
-          <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={false} tick={{ fill: MUTED, fontSize: 11, fontFamily: "Geist Mono Variable" }} />
+        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 36, left: 0, bottom: 0 }} barCategoryGap={10}>
+          <XAxis type="number" hide allowDecimals={false} />
           <YAxis
             type="category"
             dataKey="name"
-            width={104}
+            width={112}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: "#0A0A0A", fontSize: 12, fontFamily: "Geist Variable" }}
+            tick={{ fill: INK, fontSize: 13, fontFamily: FONT }}
           />
-          <Tooltip cursor={{ fill: "#F3F2FD" }} isAnimationActive={false} content={<ChartTooltip />} />
-          <Bar dataKey="count" fill={INDIGO} radius={[0, 8, 8, 0]} maxBarSize={22} isAnimationActive={!reduced} />
+          <Tooltip cursor={{ fill: LAVENDER }} isAnimationActive={false} content={<ChartTooltip />} />
+          <Bar
+            dataKey="count"
+            fill={INDIGO}
+            radius={[0, 6, 6, 0]}
+            maxBarSize={24}
+            isAnimationActive={!reduced}
+            background={{ fill: LAVENDER, radius: 6 }}
+          >
+            <LabelList dataKey="count" position="right" offset={10} style={{ fill: MUTED, fontSize: 12, fontFamily: FONT, fontWeight: 600 }} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

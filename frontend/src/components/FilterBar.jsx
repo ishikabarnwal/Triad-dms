@@ -1,133 +1,127 @@
-import { Check, ChevronDown, X } from "lucide-react";
+import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/utils/format";
 import { inputType } from "@/utils/fields";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Input, NativeSelect } from "./ui/input";
 import { Skeleton } from "./ui/skeleton";
 
-/** Options list for select fields: one click picks a value and closes the popover. */
-function SelectOptions({ field, value, onApply }) {
-  return (
-    <div className="max-h-64 space-y-0.5 overflow-y-auto">
-      {field.options.map((option) => (
-        <PopoverClose asChild key={option}>
-          <button
-            type="button"
-            onClick={() => onApply(option === value ? "" : option)}
-            className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-lavender"
-          >
-            {option}
-            {option === value && <Check className="size-4 text-primary" aria-hidden="true" />}
-          </button>
-        </PopoverClose>
-      ))}
-    </div>
-  );
-}
+const SEARCH_DELAY_MS = 300;
+// The documents API treats "q" as a title and text search, separate from the metadata filters.
+export const SEARCH_KEY = "q";
 
-/** Text, number and date fields: type a value, then apply it. */
-function ValueInput({ field, value, onApply }) {
+/** A text box that only reports its value once typing pauses. */
+function SearchBox({ value, onChange }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
+  useEffect(() => {
+    if (draft === value) {
+      return undefined;
+    }
+    const timer = setTimeout(() => onChange(draft.trim()), SEARCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [draft, value, onChange]);
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        onApply(draft.trim());
-      }}
-      className="space-y-2"
-    >
+    <div className="relative w-full sm:w-60">
+      <MagnifyingGlass className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
       <Input
-        type={inputType(field)}
+        type="search"
         value={draft}
-        autoFocus
-        aria-label={field.label}
-        placeholder={field.type === "date" ? undefined : `Exact ${field.label.toLowerCase()}`}
         onChange={(event) => setDraft(event.target.value)}
+        placeholder="Search titles or files"
+        aria-label="Search titles and file names"
+        className="h-10 pl-9"
       />
-      <PopoverClose asChild>
-        <Button type="submit" size="sm" className="w-full">
-          Apply
-        </Button>
-      </PopoverClose>
-    </form>
-  );
-}
-
-function displayValue(field, value) {
-  return field.type === "date" ? formatDate(value) : value;
-}
-
-/** One filter as a pill: shows "Field" when empty, "Field: value" with a clear button when set. */
-function FilterChip({ field, value, onChange }) {
-  const active = Boolean(value);
-  return (
-    <div
-      className={cn(
-        "inline-flex h-9 items-center rounded-full border text-sm transition-colors",
-        active ? "border-primary/40 bg-primary/8 text-primary" : "border-dashed border-line bg-white text-muted hover:border-primary hover:text-ink",
-      )}
-    >
-      <Popover>
-        <PopoverTrigger asChild>
-          <button type="button" className="flex h-full cursor-pointer items-center gap-1.5 pr-2 pl-3.5">
-            <span className={cn(active && "text-muted")}>{field.label}</span>
-            {active && <span className="max-w-40 truncate font-medium text-primary">{displayValue(field, value)}</span>}
-            {!active && <ChevronDown className="size-3.5" aria-hidden="true" />}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent>
-          <div className="label-mono mb-2 px-1 text-muted">Filter · {field.label}</div>
-          {field.type === "select" ? (
-            <SelectOptions field={field} value={value} onApply={(next) => onChange(field.key, next)} />
-          ) : (
-            <ValueInput field={field} value={value || ""} onApply={(next) => onChange(field.key, next)} />
-          )}
-        </PopoverContent>
-      </Popover>
-      {active && (
-        <button
-          type="button"
-          onClick={() => onChange(field.key, "")}
-          className="mr-1 flex size-7 cursor-pointer items-center justify-center rounded-full hover:bg-primary/10"
-          aria-label={`Clear ${field.label} filter`}
-        >
-          <X className="size-3.5" />
-        </button>
-      )}
     </div>
   );
+}
+
+/** Free text and number filters apply on Enter or when the box loses focus, not on every key. */
+function TextFilter({ field, value, onChange }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => draft.trim() !== value && onChange(field.key, draft.trim());
+  return (
+    <Input
+      type={inputType(field)}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => event.key === "Enter" && commit()}
+      placeholder={field.label}
+      aria-label={field.label}
+      className="h-10 w-full sm:w-44"
+    />
+  );
+}
+
+/** One control per filterable field, shaped by its type. */
+function FieldFilter({ field, value, onChange }) {
+  const active = Boolean(value);
+  if (field.type === "select") {
+    return (
+      <NativeSelect
+        value={value}
+        onChange={(event) => onChange(field.key, event.target.value)}
+        aria-label={field.label}
+        className={cn("h-10 w-full sm:w-auto sm:min-w-40", active && "border-primary/50 text-primary")}
+      >
+        <option value="">Any {field.label.toLowerCase()}</option>
+        {field.options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </NativeSelect>
+    );
+  }
+  if (field.type === "date") {
+    return (
+      <label
+        className={cn(
+          "flex h-10 w-full items-center gap-2 rounded-lg border bg-white pr-2 pl-3 text-sm focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/15 sm:w-auto",
+          active ? "border-primary/50" : "border-line",
+        )}
+      >
+        <span className="shrink-0 text-muted">{field.label}</span>
+        <input
+          type="date"
+          value={value}
+          onChange={(event) => onChange(field.key, event.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-ink outline-none"
+        />
+      </label>
+    );
+  }
+  return <TextFilter field={field} value={value} onChange={onChange} />;
 }
 
 /**
- * Filters built from the admin-defined metadata fields (only those marked filterable).
- * `values` maps field key -> current value; `onChange(key, value)` updates one filter.
+ * The filter row, built from the admin-defined metadata fields that are marked filterable.
+ * `values` holds the current URL params; `onChange(key, value)` updates one of them.
  */
 export default function FilterBar({ fields, values, onChange, onClear, loading }) {
   if (loading) {
     return (
-      <div className="flex gap-2">
-        {[0, 1, 2].map((n) => (
-          <Skeleton key={n} className="h-9 w-28 rounded-full" />
+      <div className="flex flex-wrap gap-2">
+        {[64, 44, 44, 40].map((width, index) => (
+          <Skeleton key={index} className="h-10 rounded-lg" style={{ width: `${width * 4}px` }} />
         ))}
       </div>
     );
   }
   const filterable = fields.filter((field) => field.filterable);
-  const activeCount = filterable.filter((field) => values[field.key]).length;
+  const active = [SEARCH_KEY, ...filterable.map((field) => field.key)].some((key) => values[key]);
 
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filters">
+      <SearchBox value={values[SEARCH_KEY] || ""} onChange={(text) => onChange(SEARCH_KEY, text)} />
       {filterable.map((field) => (
-        <FilterChip key={field.id} field={field} value={values[field.key] || ""} onChange={onChange} />
+        <FieldFilter key={field.id} field={field} value={values[field.key] || ""} onChange={onChange} />
       ))}
-      {activeCount > 0 && (
-        <button type="button" onClick={onClear} className="label-mono cursor-pointer px-2 text-muted hover:text-primary">
-          Clear all
+      {active && (
+        <button type="button" onClick={onClear} className="cursor-pointer px-2 text-sm font-semibold text-primary hover:underline">
+          Clear filters
         </button>
       )}
     </div>

@@ -1,11 +1,11 @@
+import { ArrowDown, ArrowUp, CaretUpDown, Columns } from "@phosphor-icons/react";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { columnFields } from "@/utils/fields";
-import { formatBytes, formatDate } from "@/utils/format";
+import { formatBytes, formatDate, NOT_SET } from "@/utils/format";
 import { AccessChip, Chip, DivisionChip, FileIcon, OcrChip } from "./Chips";
 import { staggerItem } from "./motion";
 import { Button } from "./ui/button";
@@ -40,13 +40,17 @@ function useStoredVisibility() {
   return [visibility, setVisibility];
 }
 
+function NotSet() {
+  return <span className="text-xs text-muted/80">{NOT_SET}</span>;
+}
+
 /** A metadata value rendered by its field type. */
 function MetadataValue({ field, value }) {
   if (value === undefined || value === null || value === "") {
-    return <span className="text-muted/60">—</span>;
+    return <NotSet />;
   }
   if (field.type === "date") {
-    return <span className="font-mono text-xs text-muted">{formatDate(value)}</span>;
+    return <span className="text-sm whitespace-nowrap text-muted">{formatDate(value)}</span>;
   }
   if (field.type === "select") {
     return <Chip tone="outline">{String(value)}</Chip>;
@@ -73,24 +77,22 @@ function buildColumns(fields) {
         <div className="flex min-w-56 items-center gap-3">
           <FileIcon contentType={row.original.content_type} />
           <div className="min-w-0">
-            <div className="max-w-72 truncate font-medium">{row.original.title}</div>
-            <div className="font-mono text-[11px] text-muted">
-              {row.original.content_type === "application/pdf" ? "PDF" : "IMG"} · {formatBytes(row.original.size)}
-            </div>
+            <p className="max-w-72 truncate font-semibold">{row.original.title}</p>
+            <p className="max-w-72 truncate text-xs text-muted">
+              {row.original.filename} · {formatBytes(row.original.size)}
+            </p>
           </div>
         </div>
       ),
     },
     { id: "division", header: "Division", cell: ({ row }) => <DivisionChip name={row.original.division} /> },
     ...metadata,
-    { id: "ocr", header: "OCR", cell: ({ row }) => <OcrChip status={row.original.ocr_status} /> },
+    { id: "ocr", header: "Text", cell: ({ row }) => <OcrChip status={row.original.ocr_status} /> },
     {
       id: "created_at",
       header: "Uploaded",
       meta: { sortKey: "created_at" },
-      cell: ({ row }) => (
-        <span className="font-mono text-xs whitespace-nowrap text-muted">{formatDate(row.original.created_at)}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm whitespace-nowrap text-muted">{formatDate(row.original.created_at)}</span>,
     },
     { id: "access", header: "Access", cell: ({ row }) => <AccessChip status={row.original.access_status} /> },
   ];
@@ -98,21 +100,21 @@ function buildColumns(fields) {
 
 function SortIcon({ direction }) {
   if (direction === "asc") {
-    return <ArrowUp className="size-3" aria-hidden="true" />;
+    return <ArrowUp className="size-3.5" weight="bold" aria-hidden="true" />;
   }
   if (direction === "desc") {
-    return <ArrowDown className="size-3" aria-hidden="true" />;
+    return <ArrowDown className="size-3.5" weight="bold" aria-hidden="true" />;
   }
-  return <ChevronsUpDown className="size-3 opacity-40" aria-hidden="true" />;
+  return <CaretUpDown className="size-3.5 opacity-50" aria-hidden="true" />;
 }
 
-/** Column visibility menu, placed by the parent next to the filters. */
+/** Column visibility menu, placed by the parent in the table's toolbar. */
 export function ColumnsMenu({ table }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
-          <Columns3 className="size-4" aria-hidden="true" />
+          <Columns className="size-4" aria-hidden="true" />
           Columns
         </Button>
       </DropdownMenuTrigger>
@@ -135,7 +137,7 @@ export function ColumnsMenu({ table }) {
   );
 }
 
-/** Select fields show by default; free-text, number and date fields start hidden to keep the table narrow. */
+/** Select fields show by default; free text, number and date fields start hidden to keep the table narrow. */
 function defaultVisibility(fields) {
   return Object.fromEntries(
     columnFields(fields)
@@ -176,7 +178,7 @@ export default function DocumentsTable({ table, loading, sort, order, onSortChan
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-line">
+          <tr className="border-b border-line bg-lavender/50">
             {headers.map((header) => {
               const sortKey = header.column.columnDef.meta?.sortKey;
               const direction = sortKey && sort === sortKey ? order : null;
@@ -185,23 +187,20 @@ export default function DocumentsTable({ table, loading, sort, order, onSortChan
                 <th
                   key={header.id}
                   scope="col"
-                  className="h-11 px-4 text-left whitespace-nowrap first:pl-5"
+                  className="h-11 px-4 text-left text-xs font-semibold whitespace-nowrap text-muted first:pl-5"
                   aria-sort={direction ? (direction === "asc" ? "ascending" : "descending") : undefined}
                 >
                   {sortKey ? (
                     <button
                       type="button"
                       onClick={() => toggleSort(sortKey)}
-                      className={cn(
-                        "label-mono inline-flex cursor-pointer items-center gap-1.5 hover:text-ink",
-                        direction ? "text-ink" : "text-muted",
-                      )}
+                      className={cn("inline-flex cursor-pointer items-center gap-1.5 rounded-md hover:text-ink", direction && "text-ink")}
                     >
                       {label}
                       <SortIcon direction={direction} />
                     </button>
                   ) : (
-                    <span className="label-mono text-muted">{label}</span>
+                    label
                   )}
                 </th>
               );
@@ -211,10 +210,20 @@ export default function DocumentsTable({ table, loading, sort, order, onSortChan
         <tbody>
           {loading
             ? Array.from({ length: SKELETON_ROWS }, (_, row) => (
-                <tr key={row} className="border-b border-line/70 last:border-0">
+                <tr key={row} className="border-b border-line last:border-0">
                   {headers.map((header, column) => (
                     <td key={header.id} className="h-16 px-4 first:pl-5">
-                      <Skeleton className={cn("h-3.5", column === 0 ? "w-48" : "w-16")} />
+                      {column === 0 ? (
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="size-9 rounded-lg" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-3.5 w-40" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                      ) : (
+                        <Skeleton className="h-6 w-16 rounded-md" />
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -227,13 +236,10 @@ export default function DocumentsTable({ table, loading, sort, order, onSortChan
                   onClick={() => open(row.id)}
                   onKeyDown={(event) => event.key === "Enter" && open(row.id)}
                   aria-label={`Open ${row.original.title}`}
-                  className="group cursor-pointer border-b border-line/70 transition-colors last:border-0 hover:bg-lavender/60 focus-visible:bg-lavender focus-visible:outline-none"
+                  className="cursor-pointer border-b border-line transition-colors last:border-0 hover:bg-lavender/60 focus-visible:bg-lavender focus-visible:outline-none"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="h-16 px-4 first:pl-5 group-hover:first:shadow-[inset_2px_0_0_var(--color-primary)]"
-                    >
+                    <td key={cell.id} className="h-16 px-4 first:pl-5">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
