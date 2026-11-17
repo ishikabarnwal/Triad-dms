@@ -357,7 +357,6 @@ def _write_page(document, heading, paragraphs, meta_lines):
     banner = meta_lines["classification"]
     left = (page.rect.width - fitz.get_text_length(banner, fontname="hebo", fontsize=9)) / 2
     page.insert_text((left, 36), banner, fontsize=9, fontname="hebo")
-    page.insert_text((left, 818), banner, fontsize=9, fontname="hebo")
     y = 80
     if document.page_count == 1:
         page.insert_text((60, y), meta_lines["title"], fontsize=17, fontname="hebo")
@@ -369,6 +368,8 @@ def _write_page(document, heading, paragraphs, meta_lines):
     page.insert_text((60, y), heading, fontsize=12.5, fontname="hebo")
     y += 10
     page.insert_textbox(fitz.Rect(60, y, 535, 790), "\n\n".join(paragraphs), fontsize=10.5, fontname="helv", lineheight=1.45)
+    # Text is extracted in drawing order, so the footer banner goes last to keep the text reading top to bottom.
+    page.insert_text((left, 818), banner, fontsize=9, fontname="hebo")
 
 
 def build_pdf(spec, division):
