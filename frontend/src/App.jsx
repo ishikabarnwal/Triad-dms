@@ -1,11 +1,14 @@
 import { FileText, Search, Settings, ShieldCheck } from "lucide-react";
 import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import ProtectedRoute, { FullPageSpinner, GuestRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import SignupPage from "./pages/SignupPage";
+import TermsPage from "./pages/TermsPage";
 
 // The landing page (smooth scroll, animations) and the dashboard (charts) are the heaviest
 // screens, so each is downloaded only when it's first opened.
@@ -17,6 +20,8 @@ export default function App() {
     <Suspense fallback={<FullPageSpinner />}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
@@ -35,7 +40,7 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );
