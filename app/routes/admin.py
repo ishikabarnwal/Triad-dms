@@ -70,7 +70,7 @@ def ensure_key_available(key, exclude_id=None):
     """400 for unsafe or reserved keys, 409 if another field (active or not) already has this key."""
     problem = check_key(key)
     if problem:
-        raise ApiError(400, "invalid_key", problem)
+        raise ApiError(400, "invalid_key", problem, field="key")
     query = {"key": exact_ignoring_case(key)}
     if exclude_id:
         query["_id"] = {"$ne": exclude_id}
@@ -81,6 +81,7 @@ def ensure_key_available(key, exclude_id=None):
             409,
             "field_exists",
             f"A field with key '{existing['key']}' already exists.{hint}",
+            field="key",
             field_id=str(existing["_id"]),
         )
 
@@ -88,7 +89,7 @@ def ensure_key_available(key, exclude_id=None):
 def ensure_select_has_options(field_type, options, field=None):
     """Select fields need at least one option (unless their options come from divisions)."""
     if field_type == "select" and not options and not (field and field.get("source")):
-        raise ApiError(400, "options_required", "A select field needs at least one option.")
+        raise ApiError(400, "options_required", "A select field needs at least one option.", field="options")
 
 
 def field_response(field, status=200):
@@ -180,6 +181,7 @@ def update_field(field_id):
                 409,
                 "field_in_use",
                 f"{in_use} documents use '{field['key']}', so its {attribute} can't change.",
+                field=attribute,
                 usage_count=in_use,
             )
 
@@ -226,7 +228,7 @@ def ensure_division_unique(name=None, code=None, exclude_id=None):
             continue
         existing = find_division(value)
         if existing and existing["_id"] != exclude_id:
-            raise ApiError(409, "division_exists", f"A division already uses the {label} '{value}'.")
+            raise ApiError(409, "division_exists", f"A division already uses the {label} '{value}'.", field=label)
 
 
 def rename_division(old, new):
@@ -368,7 +370,9 @@ def audit_conditions(query):
     conditions = []
     if query.action:
         # Prefix match, so ?action=access finds access.request, access.approve, ...
-        conditions.append({"action": re.compile(f"^{re.escape(query.action)}")})
+        # Several prefixes can be given, comma separated, for groups like downloads and previews.
+        prefixes = [prefix.strip() for prefix in query.action.split(",") if prefix.strip()]
+        conditions.append({"action": re.compile("^(" + "|".join(re.escape(prefix) for prefix in prefixes) + ")")})
     if query.actor:
         actor_id = parse_object_id(query.actor)
         if actor_id:
@@ -387,7 +391,7 @@ def audit_conditions(query):
 @admin_bp.get("/audit-logs")
 @admin_required
 def audit_logs():
-    """Audit log, newest first. Filter by action (prefix), actor (id or name), division and date range."""
+    """Audit log, newest first. Filter by action (prefixes, comma separated), actor (id or name), division and dates."""
     query = AuditQuery.model_validate(request.args.to_dict())
     conditions = audit_conditions(query)
     mongo_query = {"$and": conditions} if conditions else {}

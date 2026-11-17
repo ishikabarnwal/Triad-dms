@@ -414,6 +414,37 @@ def test_audit_log_is_newest_first_and_filterable(api, client, upload, tokens):
     assert all(e["division"] == "Division A" for e in by_division["logs"])
 
 
+def test_audit_log_action_accepts_several_prefixes(api, client, upload, tokens):
+    doc_id = upload(FAKE_PDF, title="Prefix Check", headers=tokens["a"]).get_json()["id"]
+    client.get(f"/api/documents/{doc_id}/download", headers=tokens["a"])
+    client.get(f"/api/documents/{doc_id}/preview", headers=tokens["a"])
+
+    reads = api.get("/audit-logs?action=document.download,document.preview").get_json()
+
+    assert {e["action"] for e in reads["logs"]} == {"document.download", "document.preview"}
+
+
+def test_document_audit_entries_carry_the_title(api, client, upload, tokens):
+    doc_id = upload(FAKE_PDF, title="Titled Entry", headers=tokens["a"]).get_json()["id"]
+    client.get(f"/api/documents/{doc_id}/download", headers=tokens["a"])
+    client.get(f"/api/documents/{doc_id}/download", headers=tokens["b"])
+
+    logs = api.get("/audit-logs?action=document").get_json()["logs"]
+
+    titles = {e["action"]: e["details"].get("title") for e in logs}
+    assert titles == {"document.upload": "Titled Entry", "document.download": "Titled Entry", "document.download_denied": "Titled Entry"}
+
+
+def test_admin_errors_name_the_input_they_belong_to(api, upload, tokens):
+    reserved = api.send("post", "/metadata-fields", {"key": "page", "type": "text"}).get_json()
+    no_options = api.send("post", "/metadata-fields", {"key": "Empty Select", "type": "select"}).get_json()
+    taken_code = api.send("post", "/divisions", {"name": "Division Z", "code": api.division("Division A")["code"]}).get_json()
+
+    assert reserved["field"] == "key"
+    assert no_options["field"] == "options"
+    assert taken_code["field"] == "code"
+
+
 def test_audit_log_by_actor_id_and_dates(api, tokens):
     bravo = api.get("/users?q=bravo").get_json()["users"][0]
     today, tomorrow = date.today(), date.today() + timedelta(days=1)
