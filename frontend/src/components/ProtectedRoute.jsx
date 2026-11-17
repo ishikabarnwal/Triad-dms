@@ -5,7 +5,7 @@ export function FullPageSpinner() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-lavender" role="status">
       <span className="size-8 animate-spin rounded-full border-2 border-line border-t-primary" />
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">Loading</span>
     </div>
   );
 }

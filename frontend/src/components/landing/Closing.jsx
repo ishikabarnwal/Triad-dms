@@ -2,7 +2,7 @@ import { Gauge, ListChecks, Lock, ScanLine, Timer, Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import usePublicConfig from "@/hooks/usePublicConfig";
-import { fileTypeLabels } from "@/lib/limits";
+import { fileTypeLabels, listInWords } from "@/lib/limits";
 import { Reveal } from "../motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Button, ButtonArrow } from "../ui/button";
@@ -97,11 +97,6 @@ export function Numbers() {
       </div>
     </section>
   );
-}
-
-/** "PDF, PNG and JPG" from a list of type labels. */
-function listInWords(items) {
-  return items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : items.join("");
 }
 
 export function Faq() {

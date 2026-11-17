@@ -1,21 +1,16 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
+import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
-function Overlay({ className }) {
-  return (
-    <DialogPrimitive.Overlay
-      className={cn(
-        "fixed inset-0 z-50 bg-plum/45 data-[state=open]:animate-fade-in",
-        className,
-      )}
-    />
-  );
-}
+// Radix's portal hands its child a ref, so the overlay has to forward it.
+const Overlay = forwardRef(function Overlay({ className, ...props }, ref) {
+  return <DialogPrimitive.Overlay ref={ref} className={cn("fixed inset-0 z-50 bg-plum/45 data-[state=open]:animate-fade-in", className)} {...props} />;
+});
 
 /**
  * Centered dialog. Radix requires a title for screen readers, so `title` is always rendered;
@@ -29,24 +24,24 @@ export function DialogContent({ title, description, hideTitle = false, className
         // Without a description Radix needs an explicit undefined, or it warns in the console.
         {...(description ? {} : { "aria-describedby": undefined })}
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 data-[state=open]:animate-dialog-in flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[1.5rem] border border-line bg-white shadow-pop focus:outline-none",
+          "fixed top-1/2 left-1/2 z-50 data-[state=open]:animate-dialog-in flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-pop focus:outline-none",
           className,
         )}
         {...props}
       >
         <div className={cn("flex items-start justify-between gap-4 px-6 pt-6", hideTitle && "sr-only")}>
           <div>
-            <DialogPrimitive.Title className="text-xl font-semibold tracking-tight">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="text-xl font-bold tracking-[-0.02em]">{title}</DialogPrimitive.Title>
             {description ? (
               <DialogPrimitive.Description className="mt-1 text-sm text-muted">{description}</DialogPrimitive.Description>
             ) : null}
           </div>
           {closable && !hideTitle && (
             <DialogPrimitive.Close
-              className="-mt-1 -mr-2 rounded-full p-2 text-muted transition-colors hover:bg-lavender hover:text-ink"
+              className="-mt-1 -mr-2 cursor-pointer rounded-lg p-2 text-muted transition-colors hover:bg-lavender hover:text-ink"
               aria-label="Close"
             >
-              <X className="size-4" />
+              <X className="size-4" aria-hidden="true" />
             </DialogPrimitive.Close>
           )}
         </div>

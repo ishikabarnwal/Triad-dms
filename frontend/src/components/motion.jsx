@@ -1,5 +1,4 @@
-import { animate, motion, useInView, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -58,35 +57,4 @@ export function staggerItem(index, step = 0.035) {
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.28, delay: Math.min(index * step, 0.4), ease: EASE },
   };
-}
-
-/** A number that counts up from 0 the first time it scrolls into view. */
-export function CountUp({ value, suffix = "", duration = 1.2, className }) {
-  const reduced = useReducedMotion();
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
-  const [shown, setShown] = useState(reduced ? value : 0);
-
-  useEffect(() => {
-    if (reduced) {
-      setShown(value);
-      return undefined;
-    }
-    if (!inView) {
-      return undefined;
-    }
-    const controls = animate(0, value, {
-      duration,
-      ease: EASE,
-      onUpdate: (latest) => setShown(Math.round(latest)),
-    });
-    return () => controls.stop();
-  }, [value, inView, reduced, duration]);
-
-  return (
-    <span ref={ref} className={className}>
-      {shown.toLocaleString("en-IN")}
-      {suffix}
-    </span>
-  );
 }
