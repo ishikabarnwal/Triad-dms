@@ -35,7 +35,7 @@ export default function Footer() {
               <Logo size="md" />
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-6 text-white/70">
-              Secure document management for defence divisions. A prototype by Triad AI.
+              Secure document management for defence divisions. Prototype built by Ishika Barnwal for Triad AI.
             </p>
             <address className="mt-6 text-sm leading-6 text-white/70 not-italic">
               Plot No. 76, Survey No. 252, Malkapoor Village,
@@ -68,7 +68,7 @@ export default function Footer() {
           ))}
         </div>
         <div className="mt-14 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-6 text-sm text-white/55">
-          <span>© 2026 Triad AI Pvt. Ltd.</span>
+          <span>© 2026 Ishika Barnwal. Triad AI name and logo belong to Triad AI Pvt. Ltd.</span>
           <span>Every upload, download and decision is recorded.</span>
         </div>
       </div>
