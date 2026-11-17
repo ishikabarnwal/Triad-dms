@@ -1,46 +1,53 @@
-import { FileImage, FileText, UploadCloud, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CloudArrowUp, FileImage, FilePdf, Warning, X } from "@phosphor-icons/react";
+import { useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import { errorInfo } from "@/api/client";
 import { uploadDocument } from "@/api/documents";
 import { useAuth } from "@/context/AuthContext";
+import usePublicConfig from "@/hooks/usePublicConfig";
+import { fileTypeLabels, listInWords } from "@/lib/limits";
 import { cn } from "@/lib/utils";
 import { inputType, isDivisionField } from "@/utils/fields";
 import { fileStem, formatBytes } from "@/utils/format";
-import ScrambleText from "./ScrambleText";
-import { Button, ButtonArrow } from "./ui/button";
+import { Button } from "./ui/button";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Input, NativeSelect } from "./ui/input";
 import { Field } from "./ui/label";
 import { Progress } from "./ui/progress";
 
-const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-const ACCEPTED_TYPES = {
-  "application/pdf": [".pdf"],
-  "image/png": [".png"],
-  "image/jpeg": [".jpg", ".jpeg"],
-  "image/tiff": [".tif", ".tiff"],
-  "image/bmp": [".bmp"],
-  "image/webp": [".webp"],
+// Browser MIME type for each extension the API may accept. The accepted list itself comes from the API.
+const MIME_BY_EXTENSION = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  bmp: "image/bmp",
+  webp: "image/webp",
 };
-const SCAN_WORDS = ["READING PAGES", "EXTRACTING TEXT", "INDEXING FOR SEARCH"];
-const SCAN_WORD_MS = 1400;
+
+/** react-dropzone's accept map, e.g. { "image/jpeg": [".jpg", ".jpeg"] }, from the API's extensions. */
+function acceptFor(extensions) {
+  const accept = {};
+  extensions.forEach((extension) => {
+    const mime = MIME_BY_EXTENSION[extension];
+    if (mime) {
+      accept[mime] = [...(accept[mime] || []), `.${extension}`];
+    }
+  });
+  return accept;
+}
 
 /** One metadata input, shaped by the field's type. */
 function MetadataField({ field, value, error, locked, onChange }) {
   const id = `upload-${field.id}`;
   return (
-    <Field
-      label={field.label}
-      htmlFor={id}
-      required={field.required}
-      error={error}
-      hint={locked ? "Filed under your own division." : undefined}
-    >
+    <Field label={field.label} htmlFor={id} required={field.required} error={error} hint={locked ? "Files are saved to your own division." : undefined}>
       {field.type === "select" ? (
         <NativeSelect id={id} value={value} invalid={Boolean(error)} disabled={locked} onChange={(e) => onChange(e.target.value)}>
-          {(!field.required || !value) && <option value="">{field.required ? "Choose…" : "Not set"}</option>}
+          {(!field.required || !value) && <option value="">{field.required ? "Choose an option" : "Not set"}</option>}
           {field.options.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -54,37 +61,10 @@ function MetadataField({ field, value, error, locked, onChange }) {
   );
 }
 
-/** Dashed border drawn in SVG so it can march while a file is dragged over. */
-function DropBorder({ active, rejected }) {
+/** A page with a scan line sweeping it while OCR runs on the server. */
+function ExtractingState() {
   return (
-    <svg className="pointer-events-none absolute inset-0 size-full" aria-hidden="true">
-      <rect
-        x="0.75"
-        y="0.75"
-        rx="19"
-        style={{ width: "calc(100% - 1.5px)", height: "calc(100% - 1.5px)" }}
-        fill="none"
-        strokeWidth="1.5"
-        strokeDasharray="7 7"
-        className={cn(
-          "transition-colors",
-          rejected ? "stroke-danger" : active ? "stroke-primary" : "stroke-muted/40",
-          active && "animate-[march_0.6s_linear_infinite]",
-        )}
-      />
-    </svg>
-  );
-}
-
-/** Scan line sweeping a document while the status text decrypts. */
-function ScanningState() {
-  const [word, setWord] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setWord((current) => (current + 1) % SCAN_WORDS.length), SCAN_WORD_MS);
-    return () => clearInterval(timer);
-  }, []);
-  return (
-    <div className="flex flex-col items-center px-6 py-14 text-center" role="status">
+    <div className="flex flex-col items-center px-6 pt-8 pb-14 text-center" role="status">
       <div className="relative mb-6 flex h-28 w-22 items-center justify-center overflow-hidden rounded-xl border border-line bg-lavender">
         <div className="w-12 space-y-1.5" aria-hidden="true">
           {[100, 80, 92, 64, 86, 72].map((width, index) => (
@@ -93,8 +73,10 @@ function ScanningState() {
         </div>
         <span className="absolute inset-x-0 h-0.5 animate-scan bg-primary" aria-hidden="true" />
       </div>
-      <ScrambleText key={word} text={SCAN_WORDS[word]} className="label-mono text-primary" />
-      <p className="mt-2 text-sm text-muted">Running OCR so the document can be searched by what it says.</p>
+      <p className="text-lg font-bold tracking-[-0.02em]">Extracting text</p>
+      <p className="mt-1.5 max-w-sm text-sm leading-6 text-muted">
+        Reading the pages so the document can be found by the words inside it. This can take a moment for long scans.
+      </p>
     </div>
   );
 }
@@ -103,7 +85,7 @@ function initialValues(fields, user) {
   return Object.fromEntries(fields.map((field) => [field.key, isDivisionField(field) ? user.division : ""]));
 }
 
-/** Client-side check for required fields, so obvious gaps don't need a round trip. */
+/** Client side check for required fields, so obvious gaps don't need a round trip. */
 function missingRequired(fields, values) {
   const errors = {};
   fields.forEach((field) => {
@@ -114,19 +96,22 @@ function missingRequired(fields, values) {
   return errors;
 }
 
-function ocrMessage(document) {
+/** Calm, specific confirmation: where the file went and what OCR managed to read. */
+function announce(document) {
+  const filed = `${document.title} uploaded to ${document.division}.`;
   if (document.ocr_status === "done") {
     const pages = document.page_count === 1 ? "1 page" : `${document.page_count} pages`;
-    return `Text extracted from ${pages}. It's now searchable.`;
+    toast.success(`${filed} OCR read ${pages}.`);
+  } else if (document.ocr_status === "failed") {
+    toast(filed, { description: "Its text couldn't be read, so it can be found by its title and details only." });
+  } else {
+    toast.success(filed, { description: "Text extraction is turned off, so it wasn't read." });
   }
-  if (document.ocr_status === "failed") {
-    return `Saved, but text could not be extracted (${document.ocr_error || "unreadable file"}).`;
-  }
-  return "Saved without text extraction.";
 }
 
 export default function UploadModal({ open, fields, onOpenChange, onUploaded }) {
   const { user, isAdmin } = useAuth();
+  const config = usePublicConfig();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [values, setValues] = useState({});
@@ -134,6 +119,10 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
   const [formError, setFormError] = useState("");
   const [phase, setPhase] = useState("form");
   const [progress, setProgress] = useState(0);
+
+  const accept = useMemo(() => acceptFor(config.extensions || []), [config.extensions]);
+  const formats = listInWords(fileTypeLabels(config.file_types), "or");
+  const limits = `${formats}, up to ${config.max_upload_mb} MB`;
 
   useEffect(() => {
     if (open) {
@@ -148,14 +137,14 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
   }, [open, fields, user]);
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
-    accept: ACCEPTED_TYPES,
-    maxSize: MAX_UPLOAD_BYTES,
+    accept,
+    maxSize: config.max_upload_mb * 1024 * 1024,
     multiple: false,
     disabled: phase !== "form",
     onDrop: (accepted, rejected) => {
       if (rejected.length) {
         const tooBig = rejected[0].errors.some((e) => e.code === "file-too-large");
-        setFormError(tooBig ? "That file is larger than 25 MB." : "Only PDF and image files (PNG, JPG, TIFF, BMP, WEBP).");
+        setFormError(tooBig ? `That file is larger than ${config.max_upload_mb} MB.` : `That type isn't supported. Use ${formats}.`);
         return;
       }
       setFile(accepted[0]);
@@ -189,13 +178,11 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
       const response = await uploadDocument({ file, title: title.trim(), metadata }, (percent) => {
         setProgress(percent);
         if (percent >= 100) {
-          setPhase("scanning");
+          setPhase("extracting");
         }
       });
-      const document = response.data;
-      const notify = document.ocr_status === "failed" ? toast.error : toast.success;
-      notify(`"${document.title}" uploaded`, { description: ocrMessage(document) });
-      onUploaded(document);
+      announce(response.data);
+      onUploaded(response.data);
       onOpenChange(false);
     } catch (error) {
       const info = errorInfo(error);
@@ -208,34 +195,41 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent
-        title="Upload document"
-        description={phase === "scanning" ? undefined : "PDF or image, up to 25 MB. Text is extracted automatically."}
+        title={phase === "extracting" ? "Almost done" : "Upload document"}
+        description={phase === "extracting" ? undefined : `${limits}. Text is read automatically.`}
         className="max-w-2xl"
+        closable={!busy}
         onInteractOutside={(event) => busy && event.preventDefault()}
       >
-        {phase === "scanning" ? (
-          <ScanningState />
+        {phase === "extracting" ? (
+          <ExtractingState />
         ) : (
           <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
             <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
               {formError && (
-                <div className="rounded-xl border border-danger/25 bg-danger/5 px-4 py-3 text-sm text-danger" role="alert">
+                <p className="flex items-start gap-2 rounded-lg border border-danger/25 bg-danger/5 px-4 py-3 text-sm text-ink" role="alert">
+                  <Warning className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
                   {formError}
-                </div>
+                </p>
               )}
 
               {file ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-line p-3">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    {file.type === "application/pdf" ? <FileText className="size-5" /> : <FileImage className="size-5" />}
+                <div className="flex items-center gap-3 rounded-xl border border-line p-3">
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    {file.type === "application/pdf" ? <FilePdf className="size-5" aria-hidden="true" /> : <FileImage className="size-5" aria-hidden="true" />}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{file.name}</div>
-                    <div className="font-mono text-[11px] text-muted uppercase">{formatBytes(file.size)}</div>
+                    <p className="truncate font-semibold">{file.name}</p>
+                    <p className="text-xs text-muted">{formatBytes(file.size)}</p>
                   </div>
                   {!busy && (
-                    <button type="button" onClick={() => setFile(null)} className="rounded-full p-2 text-muted hover:bg-lavender" aria-label="Remove file">
-                      <X className="size-4" />
+                    <button
+                      type="button"
+                      onClick={() => setFile(null)}
+                      className="cursor-pointer rounded-lg p-2 text-muted hover:bg-lavender hover:text-ink"
+                      aria-label="Remove file"
+                    >
+                      <X className="size-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -243,37 +237,36 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
                 <div
                   {...getRootProps({
                     className: cn(
-                      "relative flex cursor-pointer flex-col items-center rounded-[20px] px-6 py-10 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
-                      isDragActive ? "bg-primary/5" : "bg-lavender/60 hover:bg-lavender",
+                      "flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
+                      isDragReject ? "border-danger bg-danger/5" : isDragActive ? "border-primary bg-primary/5" : "border-primary/30 bg-lavender/60 hover:border-primary/60 hover:bg-lavender",
                     ),
                   })}
                 >
                   <input {...getInputProps()} />
-                  <DropBorder active={isDragActive} rejected={isDragReject} />
-                  <span className="mb-3 flex size-12 items-center justify-center rounded-2xl border border-line bg-white text-primary">
-                    <UploadCloud className="size-5" aria-hidden="true" />
+                  <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-white text-primary shadow-soft">
+                    <CloudArrowUp className="size-6" aria-hidden="true" />
                   </span>
-                  <div className="font-medium">{isDragActive ? "Drop to upload" : "Drag a file here, or click to browse"}</div>
-                  <div className="label-mono mt-2 text-muted">PDF · PNG · JPG · TIFF · BMP · WEBP — 25 MB</div>
+                  <p className="font-semibold">{isDragActive ? "Drop to upload" : "Drag a file here, or click to browse"}</p>
+                  <p className="mt-1.5 text-sm text-muted">{limits}</p>
                 </div>
               )}
 
               {phase === "uploading" && (
                 <div>
-                  <div className="label-mono mb-2 flex justify-between text-muted">
+                  <div className="mb-2 flex justify-between text-sm text-muted">
                     <span>Uploading</span>
-                    <span>{progress}%</span>
+                    <span className="tabular-nums">{progress}%</span>
                   </div>
                   <Progress value={progress} label="Upload progress" />
                 </div>
               )}
 
-              <Field label="Title" htmlFor="upload-title" hint="Defaults to the file name.">
+              <Field label="Title" htmlFor="upload-title" hint="Starts as the file name.">
                 <Input id="upload-title" value={title} maxLength={200} disabled={busy} onChange={(e) => setTitle(e.target.value)} />
               </Field>
 
-              <div>
-                <div className="label-mono mb-3 text-muted">Metadata</div>
+              <fieldset>
+                <legend className="mb-3 text-sm font-bold">Details</legend>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {fields.map((field) => (
                     <MetadataField
@@ -286,7 +279,7 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
                     />
                   ))}
                 </div>
-              </div>
+              </fieldset>
             </div>
 
             <div className="flex justify-end gap-2 border-t border-line px-6 py-4">
@@ -294,8 +287,7 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
                 Cancel
               </Button>
               <Button type="submit" disabled={busy || !file}>
-                {busy ? "Uploading…" : "Upload"}
-                {!busy && <ButtonArrow />}
+                {busy ? "Uploading" : "Upload"}
               </Button>
             </div>
           </form>

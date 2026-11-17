@@ -5,6 +5,7 @@ import { getPublicConfig } from "@/api/config";
 // They mirror app/config.py so the page never shows an empty number.
 export const FALLBACK_CONFIG = {
   file_types: ["pdf", "png", "jpeg", "tiff", "bmp", "webp"],
+  extensions: ["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"],
   max_upload_mb: 25,
   ocr: { enabled: true, max_pages: 25, page_timeout_seconds: 60 },
   session_minutes: 480,
