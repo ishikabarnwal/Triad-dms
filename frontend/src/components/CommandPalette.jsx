@@ -114,6 +114,16 @@ export default function CommandPalette({ open, onOpenChange }) {
                 ))}
               </Command.Group>
             )}
+
+            {!loading && text.length >= MIN_QUERY && (
+              <Command.Group heading="More" className={groupClass}>
+                <Command.Item value="see-all" onSelect={() => go(`/search?q=${encodeURIComponent(query.trim())}`)} className={itemClass}>
+                  <MagnifyingGlass className="size-[18px] text-primary" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate font-medium">See all results for “{query.trim()}”</span>
+                  <ArrowRight className="size-4 text-muted" aria-hidden="true" />
+                </Command.Item>
+              </Command.Group>
+            )}
           </Command.List>
         </Command>
       </DialogContent>
