@@ -162,7 +162,7 @@ def send_document(doc_id, as_attachment):
             target_type="document",
             target_id=document["_id"],
             division=document["division"],
-            details={"access_status": status},
+            details={"title": document.get("title"), "access_status": status},
         )
         raise ApiError(
             403,
@@ -184,7 +184,7 @@ def send_document(doc_id, as_attachment):
         target_type="document",
         target_id=document["_id"],
         division=document["division"],
-        details={"filename": document["filename"], "access_status": status},
+        details={"title": document.get("title"), "filename": document["filename"], "access_status": status},
     )
 
     response = send_file(
@@ -260,6 +260,7 @@ def upload():
         target_id=document["_id"],
         division=division,
         details={
+            "title": title,
             "filename": filename,
             "size": len(data),
             "upload_source": document["upload_source"],
