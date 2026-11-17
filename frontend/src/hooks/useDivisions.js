@@ -32,3 +32,16 @@ export default function useDivisionCodes() {
   }, []);
   return codes;
 }
+
+/** Division names in the API's order, for filter menus. */
+export function useDivisionNames() {
+  const [names, setNames] = useState([]);
+  useEffect(() => {
+    let active = true;
+    loadDivisions().then((divisions) => active && setNames(divisions.map((d) => d.name)));
+    return () => {
+      active = false;
+    };
+  }, []);
+  return names;
+}

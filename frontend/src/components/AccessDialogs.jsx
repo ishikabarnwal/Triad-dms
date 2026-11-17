@@ -102,10 +102,10 @@ export function RequestAccessDialog({ document, open, onOpenChange, onRequested 
     form.setBusy(true);
     form.setError("");
     try {
-      await requestAccess(document.id, form.note.trim() || undefined);
-      toast.success("Request sent", { description: `${document.division} will review it. You'll see their decision on this page.` });
+      const response = await requestAccess(document.id, form.note.trim() || undefined);
+      toast.success("Request sent", { description: `${document.division} will review it. Their decision shows in Access requests.` });
       onOpenChange(false);
-      onRequested();
+      onRequested(response.data);
     } catch (error) {
       const info = errorInfo(error);
       // Someone (or another tab) already changed the state; show the current one instead of an error.
@@ -174,7 +174,10 @@ const DECISIONS = {
     busy: "Approving",
     noteLabel: "Note for the requester (optional)",
     send: (request, note, days) => approveRequest(request.id, days, note),
-    done: (request, updated) => [`Access approved for ${request.requester_name}`, expiryLabel(updated.expires_at)],
+    done: (request, updated) =>
+      updated.expires_at
+        ? [`Access approved for ${request.requester_name} until ${formatDate(updated.expires_at)}`]
+        : [`Access approved for ${request.requester_name}`, "No expiry. Revoke it any time from Access requests."],
   },
   reject: {
     title: "Reject request",
@@ -199,8 +202,11 @@ const DECISIONS = {
 /**
  * Approve, reject or revoke one access request. Approving offers an expiry of none, 7, 30 or 90 days.
  * `onDone` runs after any change, including when someone else decided first.
+ *
+ * With `onOptimistic({ action, request, days, note })`, the dialog closes at once and the caller
+ * shows the change straight away; it returns a function that undoes the change if the API refuses.
  */
-export function AccessDecisionDialog({ action, request, open, onOpenChange, onDone }) {
+export function AccessDecisionDialog({ action, request, open, onOpenChange, onDone, onOptimistic }) {
   const form = useDialogForm(open);
   const [expiry, setExpiry] = useState(NO_EXPIRY);
   const config = DECISIONS[action] || DECISIONS.approve;
@@ -217,8 +223,39 @@ export function AccessDecisionDialog({ action, request, open, onOpenChange, onDo
 
   const days = expiry === NO_EXPIRY ? null : Number(expiry);
 
+  const submitOptimistically = async (note) => {
+    const undo = onOptimistic({ action, request, days, note });
+    // Deciding a pending request clears it from the queue, so the sidebar badge drops now too.
+    const clearsPending = request.status === "pending";
+    if (clearsPending) {
+      notifyAccessChanged(-1);
+    }
+    onOpenChange(false);
+    try {
+      const response = await config.send(request, note, days);
+      const [title, description] = config.done(request, response.data);
+      toast.success(title, { description });
+      onDone(response.data);
+    } catch (error) {
+      undo();
+      const info = errorInfo(error);
+      if (info.status === 409) {
+        toast(info.message);
+        onDone();
+      } else {
+        toast.error(info.message);
+      }
+    } finally {
+      notifyAccessChanged();
+    }
+  };
+
   const submit = async (event) => {
     event.preventDefault();
+    if (onOptimistic) {
+      submitOptimistically(form.note.trim() || undefined);
+      return;
+    }
     form.setBusy(true);
     form.setError("");
     try {
