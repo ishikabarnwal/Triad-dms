@@ -1,4 +1,4 @@
-import { FileText, GearSix, MagnifyingGlass, ShieldCheck } from "@phosphor-icons/react";
+import { GearSix, MagnifyingGlass, ShieldCheck } from "@phosphor-icons/react";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute, { FullPageSpinner, GuestRoute } from "./components/ProtectedRoute";
@@ -12,6 +12,7 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const AppLayout = lazy(() => import("./components/AppLayout"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const DocumentPage = lazy(() => import("./pages/DocumentPage"));
 const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
 
 export default function App() {
@@ -32,7 +33,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/search" element={<PlaceholderPage title="Search" Icon={MagnifyingGlass} />} />
             <Route path="/access" element={<PlaceholderPage title="Access requests" Icon={ShieldCheck} />} />
-            <Route path="/documents/:id" element={<PlaceholderPage title="Document" Icon={FileText} />} />
+            <Route path="/documents/:id" element={<DocumentPage />} />
             <Route element={<ProtectedRoute adminOnly />}>
               <Route path="/settings" element={<PlaceholderPage title="Settings" Icon={GearSix} />} />
             </Route>

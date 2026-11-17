@@ -132,6 +132,10 @@
   box-shadow: var(--shadow-lift);
 }
 
+[data-sonner-toast][data-styled="true"][data-type="success"] [data-icon] {
+  color: var(--color-primary);
+}
+
 /* Toast actions such as "View document" use the primary button style, not Sonner's black default. */
 [data-sonner-toast][data-styled="true"] [data-button]:not([data-cancel]) {
   height: 1.875rem;
