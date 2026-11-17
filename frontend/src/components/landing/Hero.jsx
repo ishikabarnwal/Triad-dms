@@ -11,12 +11,15 @@ import { container } from "./shared";
 
 const EASE = [0.22, 1, 0.36, 1];
 
-/** Fade and rise on first load, one element after another. */
+/**
+ * A short rise on first load, one element after another, finished within 400ms. Only position
+ * moves, never opacity, so the headline and buttons are fully visible from the first frame.
+ */
 function enter(step) {
   return {
-    initial: { opacity: 0, y: 16 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6, ease: EASE, delay: 0.08 * step },
+    initial: { y: 8 },
+    animate: { y: 0 },
+    transition: { duration: 0.3, ease: EASE, delay: 0.03 * step },
   };
 }
 
@@ -112,14 +115,9 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: EASE, delay: 0.2 }}
-          className="lg:col-span-6"
-        >
+        <div className="lg:col-span-6">
           <Illustration />
-        </motion.div>
+        </div>
       </div>
     </section>
   );
