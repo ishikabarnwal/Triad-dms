@@ -1,5 +1,5 @@
 import { Copy, DownloadSimple, EyeSlash, LinkSimple, Scan, Warning } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { fileTypeLabels } from "@/lib/limits";
 import { formatBytes, formatDate, NOT_SET } from "@/utils/format";
@@ -163,8 +163,24 @@ function TextNotice({ Icon, title, children }) {
 /** OCR text with a copy button, or a calm explanation of why there is none to show. */
 export function ExtractedTextCard({ document }) {
   const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const boxRef = useRef(null);
   const text = document.ocr_text || "";
   const hasText = Boolean(document.can_download && document.ocr_status === "done" && text.trim());
+
+  // "Show more" only makes sense when the collapsed box actually cuts the text off. It is measured
+  // while collapsed, and again whenever the box changes size (a narrower window wraps more lines).
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (!box || expanded) {
+      return undefined;
+    }
+    const measure = () => setOverflows(box.scrollHeight > box.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [text, hasText, expanded]);
 
   let body;
   if (!document.can_download) {
@@ -196,6 +212,7 @@ export function ExtractedTextCard({ document }) {
     body = (
       <>
         <div
+          ref={boxRef}
           tabIndex={0}
           aria-label="Extracted text"
           className={`overflow-y-auto rounded-xl border border-line bg-lavender/60 p-4 text-sm leading-6 break-words whitespace-pre-wrap focus-visible:outline-2 ${expanded ? "max-h-[70vh]" : "max-h-72"}`}
@@ -204,9 +221,11 @@ export function ExtractedTextCard({ document }) {
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted">
           <span className="tabular-nums">{text.length.toLocaleString("en-IN")} characters</span>
-          <button type="button" onClick={() => setExpanded((current) => !current)} className="cursor-pointer font-semibold text-primary hover:underline">
-            {expanded ? "Show less" : "Show more"}
-          </button>
+          {(overflows || expanded) && (
+            <button type="button" onClick={() => setExpanded((current) => !current)} className="cursor-pointer font-semibold text-primary hover:underline">
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          )}
         </div>
       </>
     );
