@@ -22,7 +22,7 @@ const EXPIRY_OPTIONS = [
 ];
 
 /** ISO date `days` from now, for previewing when an approval would end. */
-function daysFromNow(days) {
+export function daysFromNow(days) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
