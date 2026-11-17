@@ -1,47 +1,57 @@
+import { Gauge, ListChecks, Lock, ScanLine, Timer, Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import Logo from "../Logo";
-import { CountUp, Reveal } from "../motion";
-import ScrambleText from "../ScrambleText";
+import usePublicConfig from "@/hooks/usePublicConfig";
+import { fileTypeLabels } from "@/lib/limits";
+import { Reveal } from "../motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Button, ButtonArrow } from "../ui/button";
-import { FAQS, NAV_SECTIONS, NUMBERS, SECURITY_FACTS } from "./content";
+import { FAQS, SECURITY_FACTS } from "./content";
 import { AuditTicker } from "./LiveDemos";
-import { container, SectionIntro, SectionLabel } from "./shared";
+import { container, SectionIntro } from "./shared";
 
-/** Full-width plum block: security facts in mono, plus a terminal-style audit feed. */
+const FACT_ICONS = { lock: Lock, timer: Timer, undo: Undo2, gauge: Gauge, list: ListChecks, scan: ScanLine };
+
+/** The page's one dark block: security facts beside a live audit log. */
 export function Security() {
   return (
-    <section id="security" className="scroll-mt-28 pb-28 sm:pb-36">
+    <section id="security" className="scroll-mt-28 pb-24 sm:pb-28">
       <div className="mx-auto w-full max-w-[1280px] px-3 sm:px-4">
-        <div className="card-dark rounded-[32px] px-6 py-16 sm:px-12 sm:py-20">
+        <div className="card-dark rounded-[24px] px-6 py-16 sm:px-12 sm:py-20">
           <div className="mx-auto max-w-[1100px]">
             <SectionIntro
               dark
-              number="05"
-              label="SECURITY"
-              title="Locked down by default. Opened on purpose."
-              lead="Access is decided by the division that owns a file, never by whoever happens to find it."
+              eyebrow="Security"
+              title="Locked by default, opened on purpose."
+              lead="The division that owns a file decides who reads it, never whoever happens to find it."
             />
-            <div className="grid gap-10 lg:grid-cols-12">
-              <ul className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:col-span-7">
-                {SECURITY_FACTS.map((fact, index) => (
-                  <Reveal as="li" key={fact.code} delay={index * 0.05} className="bg-plum p-5">
-                    <div className="label-mono text-white/40">{fact.code}</div>
-                    <div className="mt-2 font-medium text-white">{fact.title}</div>
-                    <p className="mt-1 text-sm text-white/55">{fact.text}</p>
-                  </Reveal>
-                ))}
+            <div className="grid gap-8 lg:grid-cols-12">
+              <ul className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:col-span-7">
+                {SECURITY_FACTS.map((fact, index) => {
+                  const Icon = FACT_ICONS[fact.icon];
+                  return (
+                    <Reveal as="li" key={fact.title} delay={index * 0.04} className="flex gap-4">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white">
+                        <Icon className="size-5" aria-hidden="true" />
+                      </span>
+                      <div>
+                        <h3 className="font-semibold text-white">{fact.title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-white/65">{fact.text}</p>
+                      </div>
+                    </Reveal>
+                  );
+                })}
               </ul>
               <Reveal className="lg:col-span-5" delay={0.1}>
-                <div className="h-full rounded-2xl border border-white/10 bg-plum-hover p-5">
-                  <div className="mb-3 flex items-center justify-between border-b border-white/10 pb-3 font-mono text-xs">
-                    <span className="text-white/80">$ tail -f audit.log</span>
-                    <span className="label-mono flex items-center gap-1.5 text-white/50">
-                      <span className="size-1.5 animate-pulse-soft rounded-full bg-primary" /> LIVE
+                <div className="h-full rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="mb-2 flex items-center justify-between border-b border-white/10 pb-3">
+                    <h3 className="font-semibold text-white">Audit log</h3>
+                    <span className="flex items-center gap-2 text-xs text-white/65">
+                      <span className="size-2 animate-pulse-soft rounded-full bg-primary" aria-hidden="true" />
+                      Live
                     </span>
                   </div>
-                  <AuditTicker visible={7} dark intervalMs={1800} />
+                  <AuditTicker visible={8} dark intervalMs={1800} />
                 </div>
               </Reveal>
             </div>
@@ -52,40 +62,61 @@ export function Security() {
   );
 }
 
-/** Real system limits, counting up as they scroll into view. */
+/** "10 per minute" -> [10, "per minute"], so the label follows whatever the server is set to. */
+function splitRate(rate) {
+  const match = /^(\d+)\s*(.*)$/.exec(rate);
+  return match ? [Number(match[1]), match[2]] : [0, rate];
+}
+
+/** Limits read from the running API. The hero shows the upload limits; these are the access rules. */
 export function Numbers() {
+  const config = usePublicConfig();
+  const [attempts, period] = splitRate(config.login_rate_limit);
+  const numbers = [
+    { value: config.access_expiry_days.max, suffix: " days", label: "Longest access grant", detail: "Or until the owners revoke it." },
+    { value: Math.round(config.session_minutes / 60), suffix: " hours", label: "Session length", detail: "Then people sign in again." },
+    { value: attempts, label: `Sign in attempts ${period}`, detail: "From one address, then it slows down." },
+    { value: config.ocr.page_timeout_seconds, suffix: " s", label: "OCR time per page", detail: "A huge scan can't stall the server." },
+  ];
   return (
-    <section aria-label="System limits" className="pb-28 sm:pb-36">
+    <section aria-labelledby="numbers-title" className="pb-24 sm:pb-28">
       <div className={container}>
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[24px] border border-line bg-line lg:grid-cols-4">
-          {NUMBERS.map((number, index) => (
-            <Reveal key={number.label} delay={index * 0.06} className="bg-white p-6 sm:p-8">
-              <CountUp
-                value={number.value}
-                suffix={number.suffix || ""}
-                className="block text-[clamp(2.5rem,5vw,4rem)] leading-none font-semibold tracking-[-0.05em]"
-              />
-              <div className="mt-3 font-medium">{number.label}</div>
-              <div className="label-mono mt-1 text-muted">{number.detail}</div>
-            </Reveal>
+        <SectionIntro eyebrow="Limits" titleId="numbers-title" title="The rules, read from the running system." />
+        <Reveal className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4">
+          {numbers.map((number) => (
+            <div key={number.label} className="bg-white p-6 sm:p-8">
+              <p className="text-[2rem] leading-none font-bold tracking-[-0.03em] tabular-nums sm:text-[2.5rem]">
+                {number.value}
+                {number.suffix}
+              </p>
+              <p className="mt-3 font-semibold">{number.label}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">{number.detail}</p>
+            </div>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
 }
 
+/** "PDF, PNG and JPG" from a list of type labels. */
+function listInWords(items) {
+  return items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : items.join("");
+}
+
 export function Faq() {
+  const config = usePublicConfig();
+  const facts = { formats: listInWords(fileTypeLabels(config.file_types)), maxUploadMb: config.max_upload_mb };
   return (
-    <section id="faq" className="scroll-mt-28 pb-28 sm:pb-36">
+    <section id="faq" className="scroll-mt-28 pb-24 sm:pb-28">
       <div className="mx-auto w-full max-w-3xl px-5 sm:px-6">
-        <SectionIntro number="06" label="FAQ" title="Questions people actually ask." center />
+        <SectionIntro center eyebrow="FAQ" title="Questions people ask first." />
         <Reveal className="card px-6 sm:px-8">
           <Accordion type="single" collapsible defaultValue="0">
             {FAQS.map((item, index) => (
               <AccordionItem key={item.question} value={String(index)}>
                 <AccordionTrigger>{item.question}</AccordionTrigger>
-                <AccordionContent>{item.answer}</AccordionContent>
+                <AccordionContent>{typeof item.answer === "function" ? item.answer(facts) : item.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -95,26 +126,28 @@ export function Faq() {
   );
 }
 
+/** Final call to action. Light, because the security block is the page's one dark section. */
 export function CallToAction() {
   const { user } = useAuth();
   return (
-    <section aria-labelledby="cta-title" className="pb-20">
-      <div className="mx-auto w-full max-w-[1280px] px-3 sm:px-4">
-        <Reveal className="card-dark rounded-[32px] px-6 py-20 text-center sm:py-28">
-          <SectionLabel number="07" text="GET STARTED" dark className="justify-center" />
-          <h2 id="cta-title" className="mx-auto mt-6 max-w-4xl text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.95] font-semibold tracking-[-0.045em] text-white">
-            Put every file in the{" "}
-            <ScrambleText text="right hands." onView className="text-primary" />
+    <section aria-labelledby="cta-title" className="pb-24">
+      <div className={container}>
+        <Reveal className="card px-6 py-16 text-center sm:py-20">
+          <p className="text-sm font-semibold text-primary">Get started</p>
+          <h2 id="cta-title" className="mx-auto mt-3 max-w-[720px] text-[2rem] leading-[1.15] font-bold tracking-[-0.03em] text-balance sm:text-5xl sm:leading-[1.1]">
+            Ready to file your first document?
           </h2>
-          <p className="mx-auto mt-6 max-w-md text-white/60">Create an account in your division and upload your first document in under a minute.</p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <p className="mx-auto mt-4 max-w-md text-lg leading-[1.6] text-muted">
+            Create an account, choose your division and upload a PDF or a scan.
+          </p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">
               <Link to={user ? "/dashboard" : "/signup"}>
-                {user ? "Open dashboard" : "Create your account"} <ButtonArrow />
+                {user ? "Open dashboard" : "Create an account"} <ButtonArrow />
               </Link>
             </Button>
             {!user && (
-              <Button asChild size="lg" variant="ghostDark">
+              <Button asChild size="lg" variant="outline">
                 <Link to="/login">Sign in</Link>
               </Button>
             )}
@@ -122,66 +155,5 @@ export function CallToAction() {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-const FOOTER_COLUMNS = [
-  { title: "Product", links: NAV_SECTIONS.slice(0, 3).map((section) => ({ label: section.label, href: `#${section.id}` })) },
-  {
-    title: "Resources",
-    links: [
-      { label: "FAQ", href: "#faq" },
-      { label: "Sign in", to: "/login" },
-      { label: "Create account", to: "/signup" },
-    ],
-  },
-  { title: "Company", links: [{ label: "triad-ai.com", href: "https://triad-ai.com", external: true }] },
-];
-
-export function Footer() {
-  return (
-    <footer className="border-t border-line bg-white">
-      <div className={`${container} py-14`}>
-        <div className="grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <Logo bare />
-            <p className="mt-4 max-w-xs text-sm text-muted">Secure document management for defence divisions.</p>
-            <address className="label-mono mt-6 leading-relaxed text-muted not-italic">
-              Plot No. 76, Survey No. 252, Malkapoor Village,
-              <br />
-              Chevella Mandal, Telangana – 501503
-            </address>
-          </div>
-          {FOOTER_COLUMNS.map((column) => (
-            <div key={column.title} className="lg:col-span-2">
-              <h3 className="label-mono mb-4 text-muted">{column.title}</h3>
-              <ul className="space-y-2.5 text-sm">
-                {column.links.map((link) => (
-                  <li key={link.label}>
-                    {link.to ? (
-                      <Link to={link.to} className="hover:text-primary">
-                        {link.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={link.href}
-                        className="hover:text-primary"
-                        {...(link.external ? { target: "_blank", rel: "noreferrer" } : {})}
-                      >
-                        {link.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="label-mono mt-14 flex flex-wrap justify-between gap-3 border-t border-line pt-6 text-muted">
-          <span>© 2026 Triad AI Pvt. Ltd.</span>
-          <span>Authorised personnel only · All activity is recorded</span>
-        </div>
-      </div>
-    </footer>
   );
 }

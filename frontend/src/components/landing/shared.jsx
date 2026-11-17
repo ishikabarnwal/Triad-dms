@@ -2,32 +2,26 @@ import { useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Reveal } from "../motion";
-import ScrambleText from "../ScrambleText";
 
-/** Mono section label like "[ 02 ] FEATURES" that decrypts when it scrolls into view. */
-export function SectionLabel({ number, text, dark = false, className }) {
+/** Section opener: a small indigo eyebrow, a heading of at most 48px, and an optional one sentence lead. */
+export function SectionIntro({ eyebrow, title, titleId, lead, center = false, dark = false, className }) {
   return (
-    <div className={cn("label-mono flex items-center gap-2", dark ? "text-white/55" : "text-muted", className)}>
-      <span className={dark ? "text-white/35" : "text-muted/70"}>[ {number} ]</span>
-      <ScrambleText text={text} onView className={dark ? "text-white" : "text-ink"} />
-    </div>
-  );
-}
-
-/** Label, huge headline and lead paragraph for a landing section. */
-export function SectionIntro({ number, label, title, lead, center = false, dark = false, className }) {
-  return (
-    <Reveal className={cn("mb-14", center && "mx-auto text-center", className)} style={{ maxWidth: center ? 820 : undefined }}>
-      <SectionLabel number={number} text={label} dark={dark} className={center ? "justify-center" : undefined} />
+    <Reveal className={cn("mb-12 max-w-[720px] sm:mb-14", center && "mx-auto text-center", className)}>
+      <p className={cn("text-sm font-semibold", dark ? "text-white/70" : "text-primary")}>{eyebrow}</p>
       <h2
+        id={titleId}
         className={cn(
-          "mt-5 text-[clamp(2.25rem,5vw,4rem)] leading-[1] font-semibold tracking-[-0.04em]",
+          "mt-3 text-[2rem] leading-[1.15] font-bold tracking-[-0.03em] text-balance sm:text-[2.5rem] lg:text-5xl lg:leading-[1.1]",
           dark && "text-white",
         )}
       >
         {title}
       </h2>
-      {lead && <p className={cn("mt-5 max-w-xl text-lg", center && "mx-auto", dark ? "text-white/65" : "text-muted")}>{lead}</p>}
+      {lead && (
+        <p className={cn("mt-4 max-w-xl text-lg leading-[1.6] text-pretty", center && "mx-auto", dark ? "text-white/65" : "text-muted")}>
+          {lead}
+        </p>
+      )}
     </Reveal>
   );
 }

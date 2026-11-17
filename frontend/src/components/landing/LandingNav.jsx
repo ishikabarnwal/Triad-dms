@@ -30,7 +30,7 @@ export default function LandingNav() {
           compact ? "max-w-4xl py-1.5 pr-1.5 pl-4 shadow-lift" : "max-w-6xl py-2.5 pr-2.5 pl-5 shadow-soft",
         )}
       >
-        <a href="#top" aria-label="Back to top" className="shrink-0">
+        <a href="/#top" aria-label="Triad DMS home" className="shrink-0">
           <Logo bare size="sm" />
         </a>
 
@@ -38,7 +38,7 @@ export default function LandingNav() {
           {NAV_SECTIONS.map((section) => (
             <a
               key={section.id}
-              href={`#${section.id}`}
+              href={`/#${section.id}`}
               className="rounded-lg px-3.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-lavender hover:text-ink"
             >
               {section.label}
@@ -92,15 +92,15 @@ export default function LandingNav() {
             {NAV_SECTIONS.map((section) => (
               <a
                 key={section.id}
-                href={`#${section.id}`}
+                href={`/#${section.id}`}
                 onClick={() => setOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-lavender"
+                className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-lavender"
               >
                 {section.label}
               </a>
             ))}
             {!user && (
-              <Link to="/login" className="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-lavender">
+              <Link to="/login" className="block rounded-lg px-4 py-3 text-sm font-medium hover:bg-lavender">
                 Sign in
               </Link>
             )}

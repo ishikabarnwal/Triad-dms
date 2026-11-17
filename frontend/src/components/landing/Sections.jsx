@@ -1,125 +1,79 @@
-import { AnimatePresence, motion, useInView, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Database, FileUp, ScanSearch, ScanText, UserCheck } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Reveal } from "../motion";
-import { MARQUEE, PIPELINE, STEPS } from "./content";
+import { PIPELINE, STEPS } from "./content";
 import {
   AccessRequestCard,
   AdminToggles,
   ApproveDownloadDemo,
   AuditTicker,
+  ExpiryChoices,
   IsolationLanes,
   MetadataBuilder,
+  RequestDemo,
   ScanDocument,
+  SearchRow,
   UploadDemo,
 } from "./LiveDemos";
 import { container, SectionIntro } from "./shared";
 
-/** Endless strip of capabilities and formats. Pauses on hover; static with reduced motion. */
-export function Marquee() {
-  const items = [...MARQUEE, ...MARQUEE];
+/**
+ * A feature card: title, one line, and a visual panel that takes up the rest of the card,
+ * so every card in a row ends at the same height with no empty space inside.
+ */
+function FeatureCard({ title, text, dark = false, delay = 0, children }) {
   return (
-    <section aria-label="Capabilities" className="border-y border-line bg-white py-5">
-      <div className="group overflow-hidden">
-        <ul className="flex w-max animate-marquee gap-10 group-hover:[animation-play-state:paused] motion-reduce:w-full motion-reduce:flex-wrap motion-reduce:justify-center">
-          {items.map((item, index) => (
-            <li key={`${item}-${index}`} className="label-mono flex items-center gap-10 text-muted" aria-hidden={index >= MARQUEE.length}>
-              {item}
-              <span className="size-1 rounded-full bg-primary" aria-hidden="true" />
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-function Tile({ code, title, text, dark = false, className, children, delay = 0, align = "end" }) {
-  return (
-    <Reveal delay={delay} className={cn("h-full", className)}>
-      <div className={cn(dark ? "card-dark" : "card lift", "flex h-full flex-col p-6")}>
-        <div className={cn("label-mono", dark ? "text-white/45" : "text-muted")}>{code}</div>
-        <h3 className={cn("mt-2 text-xl font-semibold tracking-[-0.03em]", dark && "text-white")}>{title}</h3>
-        <p className={cn("mt-1.5 max-w-md text-sm", dark ? "text-white/60" : "text-muted")}>{text}</p>
-        <div className={cn("mt-6 flex flex-1", align === "center" ? "items-center" : "items-end")}>
-          <div className="w-full">{children}</div>
+    <Reveal delay={delay} className="h-full">
+      <article className={cn(dark ? "card-dark" : "card", "flex h-full flex-col p-6")}>
+        <h3 className={cn("text-lg font-bold tracking-[-0.02em]", dark && "text-white")}>{title}</h3>
+        <p className={cn("mt-1.5 text-sm leading-6", dark ? "text-white/65" : "text-muted")}>{text}</p>
+        <div className={cn("mt-5 flex flex-1 flex-col justify-center rounded-xl p-4", dark ? "border border-white/10 bg-white/5" : "bg-lavender")}>
+          {children}
         </div>
-      </div>
+      </article>
     </Reveal>
   );
 }
 
-/** Six asymmetric tiles, each with a live mini version of the real feature inside. */
+/** Six features in a 3 by 2 grid of equal cards, each with a live mini version of the real screen. */
 export function Bento() {
   return (
-    <section id="features" className="scroll-mt-28 py-28 sm:py-36">
+    <section id="features" className="scroll-mt-28 py-24 sm:py-28">
       <div className={container}>
         <SectionIntro
-          number="02"
-          label="FEATURES"
+          eyebrow="Features"
           title="Built around who is allowed to see what."
           lead="Six parts that work together, from the upload form to the audit log."
         />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-          <Tile
-            dark
-            code="CAP.OCR"
-            title="OCR text search"
-            text="Embedded text is read directly; scanned pages go through Tesseract. Every word becomes searchable."
-            className="md:col-span-2 lg:col-span-3 lg:row-span-2"
-            align="center"
-          >
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <ScanDocument dark />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:auto-rows-fr lg:grid-cols-3">
+          <FeatureCard dark title="Search inside scans" text="OCR reads every page, so a document can be found by the words in it.">
+            <ScanDocument dark />
+            <div className="mt-3">
+              <SearchRow dark />
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
-              {[
-                ["PAGES", "3"],
-                ["WORDS", "1,842"],
-                ["ENGINE", "TESS 5"],
-              ].map(([label, value]) => (
-                <div key={label} className="bg-plum px-4 py-3">
-                  <div className="label-mono text-white/40">{label}</div>
-                  <div className="mt-1 font-mono text-sm text-white">{value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <ScanSearch className="size-4 text-white/60" aria-hidden="true" />
-              <span className="flex-1 font-mono text-xs text-white">convoy route north</span>
-              <span className="label-mono text-white/45">3 MATCHES</span>
-            </div>
-          </Tile>
-          <Tile
-            code="CAP.META"
-            title="Dynamic metadata"
-            text="Admins define the fields. Upload forms and filters rebuild themselves."
-            className="lg:col-span-3"
-            delay={0.05}
-          >
+          </FeatureCard>
+          <FeatureCard title="Fields you define" text="Admins add fields, and upload forms and filters follow." delay={0.05}>
             <MetadataBuilder />
-          </Tile>
-          <Tile
-            code="CAP.RBAC"
-            title="Division isolation"
-            text="People open files from their own division only. Everything else is locked by default."
-            className="lg:col-span-3"
-            delay={0.1}
-          >
+          </FeatureCard>
+          <FeatureCard title="Division isolation" text="People open files from their own division. Everything else stays locked." delay={0.1}>
             <IsolationLanes />
-          </Tile>
-          <Tile code="CAP.ACCESS" title="Access requests" text="Ask the owner for one file; they approve for a set time." className="lg:col-span-2">
-            <AccessRequestCard className="w-full shadow-none" />
-          </Tile>
-          <Tile code="CAP.AUDIT" title="Audit trail" text="Who did what, when, and from where." className="lg:col-span-2" delay={0.05}>
-            <div className="rounded-2xl border border-line px-3 py-1">
-              <AuditTicker visible={4} />
+          </FeatureCard>
+          <FeatureCard title="Access requests" text="Ask the owners for one file. They approve it for a set time.">
+            <div className="space-y-2">
+              <AccessRequestCard className="w-full" />
+              <ExpiryChoices />
             </div>
-          </Tile>
-          <Tile code="CAP.ADMIN" title="Admin control" text="Divisions, fields and roles from one Settings page." className="lg:col-span-2" delay={0.1}>
+          </FeatureCard>
+          <FeatureCard title="Audit trail" text="Who did what, and when, for every file." delay={0.05}>
+            <div className="rounded-lg border border-line bg-white px-3">
+              <AuditTicker visible={6} compact />
+            </div>
+          </FeatureCard>
+          <FeatureCard title="Admin control" text="Divisions, fields and their rules from one Settings page." delay={0.1}>
             <AdminToggles />
-          </Tile>
+          </FeatureCard>
         </div>
       </div>
     </section>
@@ -128,11 +82,11 @@ export function Bento() {
 
 const PIPELINE_ICONS = [FileUp, ScanText, Database, ScanSearch, UserCheck];
 
-/** A connector line with a dot travelling along it (solid colours, no gradient). */
+/** A connector line with a dot travelling along it. Solid colours only. */
 function Beam({ vertical = false, delay = 0 }) {
   const reduced = useReducedMotion();
   return (
-    <div className={cn("relative bg-primary/25", vertical ? "mx-auto h-10 w-px" : "h-px min-w-6 flex-1")} aria-hidden="true">
+    <div className={cn("relative bg-primary/25", vertical ? "mx-auto h-8 w-px" : "h-px min-w-6 flex-1")} aria-hidden="true">
       {!reduced && (
         <motion.span
           className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
@@ -145,35 +99,37 @@ function Beam({ vertical = false, delay = 0 }) {
   );
 }
 
-function PipelineNode({ node, Icon }) {
+function PipelineNode({ node, number, Icon }) {
   return (
-    <div className="card lift w-full p-4 lg:w-44">
+    <div className="card w-full p-5 lg:w-48 lg:shrink-0">
       <div className="flex items-center justify-between">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-4" aria-hidden="true" />
+        <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="size-5" aria-hidden="true" />
         </span>
-        <span className="label-mono text-muted">{node.code}</span>
+        <span className="flex size-7 items-center justify-center rounded-full border border-line text-xs font-bold text-primary">
+          {number}
+        </span>
       </div>
-      <div className="mt-3 font-semibold tracking-tight">{node.title}</div>
-      <div className="mt-0.5 text-xs text-muted">{node.detail}</div>
+      <h3 className="mt-4 font-bold tracking-[-0.02em]">{node.title}</h3>
+      <p className="mt-1 text-sm leading-5 text-muted">{node.detail}</p>
     </div>
   );
 }
 
-/** Upload → OCR → storage → index → authorised user, joined by moving beams. */
+/** Upload, OCR, storage, index and the authorised reader, joined by moving beams. */
 export function Pipeline() {
   return (
-    <section aria-label="Document pipeline" className="pb-28 sm:pb-36">
+    <section aria-labelledby="pipeline-title" className="pb-24 sm:pb-28">
       <div className={container}>
-        <SectionIntro number="03" label="PIPELINE" title="What happens to a file." center />
+        <SectionIntro eyebrow="Pipeline" titleId="pipeline-title" title="What happens to a file after upload." />
         <Reveal>
-          <ol className="flex flex-col items-stretch lg:flex-row lg:items-center" aria-label="Document pipeline">
+          <ol className="flex flex-col items-stretch lg:flex-row">
             {PIPELINE.map((node, index) => (
-              <li key={node.code} className="contents">
-                <PipelineNode node={node} Icon={PIPELINE_ICONS[index]} />
+              <li key={node.title} className="contents">
+                <PipelineNode node={node} number={index + 1} Icon={PIPELINE_ICONS[index]} />
                 {index < PIPELINE.length - 1 && (
                   <>
-                    <div className="hidden flex-1 lg:flex">
+                    <div className="hidden flex-1 items-center lg:flex">
                       <Beam delay={index * 0.3} />
                     </div>
                     <div className="lg:hidden">
@@ -190,73 +146,84 @@ export function Pipeline() {
   );
 }
 
-const STEP_VISUALS = [UploadDemo, () => <ScanDocument className="w-full max-w-md" />, () => <AccessRequestCard />, ApproveDownloadDemo];
+const STEP_VISUALS = [UploadDemo, ScanStep, RequestDemo, ApproveDownloadDemo];
+const STEP_MS = 6000;
 
-/** One step in the left column; reports itself active once it fills the middle of the screen. */
-function StepBlock({ step, index, active, onActive }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { margin: "-45% 0px -45% 0px" });
-  useEffect(() => {
-    if (inView) {
-      onActive(index);
-    }
-  }, [inView, index, onActive]);
-  const Visual = STEP_VISUALS[index];
-
+/** Step 2 visual: the scanned page with its search box underneath. */
+function ScanStep() {
   return (
-    <div ref={ref} className="py-10 lg:flex lg:min-h-[52vh] lg:items-center lg:py-0">
-      <div className={cn("transition-opacity duration-300", active ? "opacity-100" : "lg:opacity-35")}>
-        <div className="label-mono text-primary">
-          [ {step.number} ] {step.title.toUpperCase()}
-        </div>
-        <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">{step.title}</h3>
-        <p className="mt-3 max-w-md text-muted">{step.text}</p>
-        <div className="card mt-6 flex justify-center p-6 lg:hidden">
-          <Visual />
-        </div>
+    <div className="w-full space-y-3">
+      <div className="rounded-xl border border-line bg-white p-5">
+        <ScanDocument />
       </div>
+      <SearchRow />
     </div>
   );
 }
 
-/** Steps on the left highlight as they scroll past; the sticky panel on the right shows each one live. */
+/**
+ * Four steps on the left, the live visual for the chosen one on the right. The steps move on by
+ * themselves until someone picks one, and stay put with reduced motion.
+ */
 export function HowItWorks() {
+  const reduced = useReducedMotion();
   const [active, setActive] = useState(0);
+  const [chosen, setChosen] = useState(false);
   const Visual = STEP_VISUALS[active];
+
+  useEffect(() => {
+    if (reduced || chosen) {
+      return undefined;
+    }
+    const timer = setTimeout(() => setActive((current) => (current + 1) % STEPS.length), STEP_MS);
+    return () => clearTimeout(timer);
+  }, [active, reduced, chosen]);
+
+  const choose = (index) => {
+    setActive(index);
+    setChosen(true);
+  };
+
   return (
-    <section id="how-it-works" className="scroll-mt-28 pb-28 sm:pb-36">
+    <section id="how-it-works" className="scroll-mt-28 pb-24 sm:pb-28">
       <div className={container}>
-        <SectionIntro number="04" label="HOW IT WORKS" title="From upload to approved download." />
-        <div className="grid gap-12 lg:grid-cols-2">
-          <div>
+        <SectionIntro eyebrow="How it works" title="From upload to an approved download." />
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-8">
+          <ol className="space-y-2 lg:col-span-5">
             {STEPS.map((step, index) => (
-              <StepBlock key={step.number} step={step} index={index} active={active === index} onActive={setActive} />
+              <li key={step.title}>
+                <button
+                  type="button"
+                  onClick={() => choose(index)}
+                  aria-current={active === index ? "step" : undefined}
+                  className={cn(
+                    "flex w-full cursor-pointer gap-4 rounded-2xl border px-5 py-4 text-left transition-colors duration-200",
+                    active === index ? "border-line bg-white shadow-soft" : "border-transparent hover:bg-white/60",
+                  )}
+                >
+                  <span className="w-5 shrink-0 text-lg leading-7 font-bold text-primary">{index + 1}</span>
+                  <span>
+                    <span className="block text-lg leading-7 font-bold tracking-[-0.02em]">{step.title}</span>
+                    <span className={active === index ? "mt-1 block text-sm leading-6 text-muted" : "sr-only"}>{step.text}</span>
+                  </span>
+                </button>
+              </li>
             ))}
-          </div>
-          <div className="hidden lg:block">
-            <div className="card sticky top-28 flex h-[460px] flex-col p-6">
-              <div className="label-mono flex items-center justify-between text-muted">
-                <span>STEP {STEPS[active].number} / 04</span>
-                <span className="flex gap-1.5">
-                  {STEPS.map((step, index) => (
-                    <span key={step.number} className={cn("h-1 w-6 rounded-full", index <= active ? "bg-primary" : "bg-line")} />
-                  ))}
-                </span>
-              </div>
-              <div className="flex flex-1 items-center justify-center">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={active}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex w-full justify-center"
-                  >
-                    <Visual />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+          </ol>
+          <div className="card flex p-4 sm:p-6 lg:col-span-7">
+            <div className="flex flex-1 items-center rounded-xl bg-lavender p-5 sm:p-8">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.3 }}
+                  className="mx-auto w-full max-w-lg"
+                >
+                  <Visual />
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </div>
