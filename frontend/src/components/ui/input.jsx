@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 const fieldBase =
-  "w-full rounded-xl border bg-white px-3.5 text-sm text-ink transition-colors placeholder:text-muted/70 focus:outline-none focus-visible:outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-lavender disabled:text-muted";
+  "w-full rounded-lg border bg-white px-3.5 text-sm text-ink transition-colors placeholder:text-muted/70 focus:outline-none focus-visible:outline-none focus:border-primary focus:ring-4 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-lavender disabled:text-muted";
 
 export const Input = forwardRef(function Input({ className, invalid, ...props }, ref) {
   return (

@@ -7,6 +7,7 @@ import { Button, ButtonArrow } from "@/components/ui/button";
 import { Input, NativeSelect } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 import AuthLayout from "./AuthLayout";
 import { FormAlert } from "./LoginPage";
 
@@ -27,6 +28,7 @@ const TEXT_FIELDS = [
 ];
 
 export default function SignupPage() {
+  useDocumentTitle("Create an account");
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(EMPTY);
@@ -73,9 +75,8 @@ export default function SignupPage() {
 
   return (
     <AuthLayout>
-      <div className="label-mono mb-3 text-muted">[ AUTH ] New account</div>
-      <h2 className="text-3xl font-semibold tracking-[-0.04em]">Create your account</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted">You&apos;ll see documents from the division you join.</p>
+      <h1 className="text-3xl font-bold tracking-[-0.03em]">Create your account</h1>
+      <p className="mt-2 mb-7 text-sm leading-6 text-muted">You&apos;ll see documents from the division you join.</p>
 
       {error && <FormAlert>{error}</FormAlert>}
       {fieldErrors.body && <FormAlert>{fieldErrors.body}</FormAlert>}
@@ -99,23 +100,23 @@ export default function SignupPage() {
             onChange={update("division")}
             invalid={Boolean(fieldErrors.division || divisionsError)}
           >
-            <option value="">{divisions.length ? "Choose your division" : "Loading divisions…"}</option>
+            <option value="">{divisions.length ? "Choose your division" : "Loading divisions"}</option>
             {divisions.map((division) => (
               <option key={division.id} value={division.name}>
-                {division.code ? `${division.code} — ${division.name}` : division.name}
+                {division.code ? `${division.name} (${division.code})` : division.name}
               </option>
             ))}
           </NativeSelect>
         </Field>
         <Button type="submit" className="mt-2 w-full" disabled={submitting}>
-          {submitting ? "Creating account…" : "Create account"}
+          {submitting ? "Creating your account" : "Create account"}
           {!submitting && <ButtonArrow />}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-primary hover:underline">
+        <Link to="/login" className="font-semibold text-primary hover:underline">
           Sign in
         </Link>
       </p>

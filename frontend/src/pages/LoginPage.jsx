@@ -5,18 +5,20 @@ import { Button, ButtonArrow } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import useDocumentTitle from "@/hooks/useDocumentTitle";
 import AuthLayout from "./AuthLayout";
 
 export function FormAlert({ tone = "danger", children }) {
   const styles = tone === "danger" ? "border-danger/25 bg-danger/5 text-danger" : "border-line bg-lavender text-muted";
   return (
-    <div className={`mb-5 rounded-xl border px-4 py-3 text-sm ${styles}`} role="alert">
+    <div className={`mb-5 rounded-lg border px-4 py-3 text-sm ${styles}`} role="alert">
       {children}
     </div>
   );
 }
 
 export default function LoginPage() {
+  useDocumentTitle("Sign in");
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,9 +44,8 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="label-mono mb-3 text-muted">[ AUTH ] Sign in</div>
-      <h2 className="text-3xl font-semibold tracking-[-0.04em]">Welcome back</h2>
-      <p className="mt-1.5 mb-7 text-sm text-muted">Sign in to your division&apos;s workspace.</p>
+      <h1 className="text-3xl font-bold tracking-[-0.03em]">Welcome back</h1>
+      <p className="mt-2 mb-7 text-sm leading-6 text-muted">Sign in to your division&apos;s documents.</p>
 
       {expired && !error && <FormAlert tone="info">Your session has ended. Please sign in again.</FormAlert>}
       {error && <FormAlert>{error}</FormAlert>}
@@ -71,14 +72,14 @@ export default function LoginPage() {
           />
         </Field>
         <Button type="submit" className="mt-2 w-full" disabled={submitting || !identifier || !password}>
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? "Signing in" : "Sign in"}
           {!submitting && <ButtonArrow />}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted">
         New here?{" "}
-        <Link to="/signup" className="font-medium text-primary hover:underline">
+        <Link to="/signup" className="font-semibold text-primary hover:underline">
           Create an account
         </Link>
       </p>
