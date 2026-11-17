@@ -452,6 +452,28 @@ def test_details_carry_latest_request_and_manage_flag(access, tokens, doc_a):
     assert admin["can_manage_access"] is True
 
 
+def test_super_admin_inbox_can_filter_by_division(access, tokens, doc_a, doc_b):
+    access.request(tokens["b"], doc_a)
+    access.request(tokens["a"], doc_b)
+
+    only_a = access.listing("inbox", tokens["admin"], "?division=Division A")["requests"]
+
+    assert [r["owner_division"] for r in only_a] == ["Division A"]
+
+
+def test_member_inbox_ignores_division_param(access, tokens, doc_a, doc_b):
+    access.request(tokens["b"], doc_a)
+    access.request(tokens["a"], doc_b)
+
+    a_inbox = access.listing("inbox", tokens["a"], "?division=Division B")["requests"]
+
+    assert [r["owner_division"] for r in a_inbox] == ["Division A"]
+
+
+def test_super_admin_inbox_unknown_division_is_400(client, tokens):
+    assert client.get("/api/access/inbox?division=Nowhere", headers=tokens["admin"]).status_code == 400
+
+
 def test_inbox_invalid_status_is_400(client, tokens):
     assert client.get("/api/access/inbox?status=maybe", headers=tokens["a"]).status_code == 400
 

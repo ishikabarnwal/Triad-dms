@@ -13,6 +13,7 @@ from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
 from app.db import get_db
+from app.filters import division_condition
 from app.models import parse_object_id, serialize_access_request
 from app.schemas import AccessApproval, AccessDecision, AccessListQuery, AccessRequestCreate
 from app.utils import (
@@ -89,9 +90,15 @@ def status_condition(status):
     return {"status": status}
 
 
-def inbox_scope(user):
-    """Requests a user is responsible for: their division's documents, or all for the super admin."""
-    return {} if is_admin(user) else {"owner_division": user["division"]}
+def inbox_scope(user, division=None):
+    """Requests a user is responsible for: their division's documents, or all for the super admin.
+
+    The super admin may narrow it to one division. Members always see only their own,
+    so a division param from them is ignored rather than widening anything.
+    """
+    if not is_admin(user):
+        return {"owner_division": user["division"]}
+    return division_condition(division, column="owner_division") if division else {}
 
 
 def paged_requests(base_query, query):
@@ -285,9 +292,10 @@ def inbox():
     """Requests for my division's documents (all divisions for the super admin). Default ?status=pending.
 
     ?doc_id= narrows it to one document, which the details page uses for its access history.
+    ?division= (name or code) narrows the super admin's inbox to one division.
     """
     query = AccessListQuery.model_validate(request.args.to_dict())
-    return paged_requests(inbox_scope(g.current_user), query)
+    return paged_requests(inbox_scope(g.current_user, query.division), query)
 
 
 @access_bp.get("/mine")

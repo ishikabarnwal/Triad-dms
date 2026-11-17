@@ -197,6 +197,7 @@ class AccessListQuery(BaseModel):
 
     status: Literal["pending", "approved", "rejected", "revoked", "expired", "all"] = "pending"
     doc_id: ObjectIdText | None = None
+    division: Annotated[Trimmed, Field(max_length=100)] | None = None
     page: int = Field(1, ge=1)
     limit: int = Field(50, ge=1, le=100)
 
