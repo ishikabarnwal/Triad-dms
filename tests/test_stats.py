@@ -110,3 +110,36 @@ def test_stats_on_an_empty_system(client, tokens):
     assert body["total_documents"] == 0
     assert body["recent_uploads"] == []
     assert all(row["count"] == 0 for row in body["by_group"]["counts"])
+
+
+def test_recent_activity_mixes_uploads_and_decisions_newest_first(client, tokens, activity):
+    events = stats(client, tokens["a"])["recent_activity"]
+
+    assert len(events) == 5
+    times = [event["at"] for event in events]
+    assert times == sorted(times, reverse=True)
+    kinds = {event["kind"] for event in events}
+    assert {"requested", "approved", "upload"} <= kinds
+    approval = next(event for event in events if event["kind"] == "approved")
+    assert approval["document_title"] == "B1"
+    assert approval["actor"] == "Bravo User"
+    assert approval["division"] == "Division B"
+
+
+def test_recent_activity_hides_other_divisions_uploads(client, tokens, activity):
+    events = stats(client, tokens["b"])["recent_activity"]
+
+    assert not [event for event in events if event["kind"] == "upload" and event["division"] != "Division B"]
+
+
+def test_recent_activity_shows_revocations(client, tokens, activity):
+    approved = client.get("/api/access/mine?status=approved", headers=tokens["a"]).get_json()["requests"][0]
+    client.post("/api/access/revoke", json={"request_id": approved["id"]}, headers=tokens["b"])
+
+    latest = stats(client, tokens["b"])["recent_activity"][0]
+    assert latest["kind"] == "revoked"
+    assert latest["document_title"] == "B1"
+
+
+def test_recent_activity_is_empty_on_an_empty_system(client, tokens):
+    assert stats(client, tokens["a"])["recent_activity"] == []

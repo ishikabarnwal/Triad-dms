@@ -6,7 +6,7 @@ from flask import Blueprint, g, jsonify, request
 
 from app.db import get_db
 from app.metadata import active_fields
-from app.models import serialize_document
+from app.models import isoformat, serialize_document
 from app.schemas import StatsQuery
 from app.utils import (
     ApiError,
@@ -24,6 +24,7 @@ stats_bp = Blueprint("stats", __name__)
 REQUEST_STATUSES = ("pending", "approved", "rejected", "revoked", "expired")
 OCR_STATUSES = ("done", "failed", "skipped")
 RECENT_UPLOADS = 5
+RECENT_ACTIVITY = 5
 WEEK = timedelta(days=7)
 
 
@@ -81,6 +82,58 @@ def recent_uploads(user, scope):
     return items
 
 
+def upload_event(document):
+    """An upload as an activity entry."""
+    return {
+        "kind": "upload",
+        "actor": document.get("uploaded_by_name"),
+        "document_id": str(document["_id"]),
+        "document_title": document.get("title"),
+        "division": document.get("division"),
+        "at": document.get("created_at"),
+    }
+
+
+def request_events(access_request):
+    """Every dated step in one request's life: asked, decided, and revoked if it was."""
+    base = {
+        "document_id": str(access_request["document_id"]),
+        "document_title": access_request.get("document_title"),
+        "division": access_request.get("owner_division"),
+    }
+    events = [{**base, "kind": "requested", "actor": access_request.get("requester_name"), "at": access_request["created_at"]}]
+    if access_request.get("decided_at"):
+        # A revoked request was approved first; its status only says how it ended.
+        kind = "rejected" if access_request["status"] == "rejected" else "approved"
+        events.append({**base, "kind": kind, "actor": access_request.get("decided_by_name"), "at": access_request["decided_at"]})
+    if access_request.get("revoked_at"):
+        events.append({**base, "kind": "revoked", "actor": access_request.get("revoked_by_name"), "at": access_request["revoked_at"]})
+    return events
+
+
+def recent_activity(user, scope, admin):
+    """The latest uploads and access request steps the user is allowed to see, newest first.
+
+    Members see requests on their own division's documents and the requests they sent,
+    the same requests their inbox and "my requests" lists already show.
+    """
+    db = get_db()
+    request_scope = {} if admin else {"$or": [{"owner_division": user["division"]}, {"requester_id": user["_id"]}]}
+    candidates = {}
+    # Any of the newest few by each date can hold one of the latest events.
+    for date_field in ("created_at", "decided_at", "revoked_at"):
+        for access_request in db.access_requests.find(request_scope).sort(date_field, -1).limit(RECENT_ACTIVITY):
+            candidates[access_request["_id"]] = access_request
+
+    uploads = db.documents.find(scope, {"title": 1, "division": 1, "uploaded_by_name": 1, "created_at": 1})
+    events = [upload_event(document) for document in uploads.sort("created_at", -1).limit(RECENT_ACTIVITY)]
+    for access_request in candidates.values():
+        events.extend(request_events(access_request))
+
+    events.sort(key=lambda event: event["at"], reverse=True)
+    return [{**event, "at": isoformat(event["at"])} for event in events[:RECENT_ACTIVITY]]
+
+
 @stats_bp.get("/stats")
 @login_required
 def stats():
@@ -107,6 +160,7 @@ def stats():
         "pending_requests": db.access_requests.count_documents({**inbox_scope, "status": "pending"}),
         "my_requests": my_request_counts(user),
         "recent_uploads": recent_uploads(user, scope),
+        "recent_activity": recent_activity(user, scope, admin),
     }
     if admin:
         per_division = count_by({}, "division")
