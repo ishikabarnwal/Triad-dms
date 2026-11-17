@@ -86,7 +86,7 @@ function Sidebar({ onNavigate, onOpenPalette }) {
   return (
     <div className="flex h-full flex-col bg-plum px-3 py-4 text-white">
       <div className="px-1.5">
-        <Logo size="sm" />
+        <Logo size="sm" tone="dark" />
         <div className="label-mono mt-4 flex items-center gap-1.5 text-white/45">
           SYS.STATUS
           <span className={cn("size-1.5 rounded-full", status === "online" ? "bg-primary" : "bg-danger")} />
@@ -203,7 +203,7 @@ export default function AppLayout() {
 
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-30 flex items-center justify-between bg-plum px-4 py-3 lg:hidden">
-          <Logo size="sm" />
+          <Logo size="sm" tone="dark" />
           <div className="flex gap-1 text-white">
             <button type="button" onClick={openPalette} className="rounded-lg p-2 hover:bg-white/10" aria-label="Search">
               <Search className="size-5" />

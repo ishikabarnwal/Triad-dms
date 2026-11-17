@@ -1,51 +1,52 @@
 @import "tailwindcss";
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/geist-mono";
+@import "@fontsource/big-shoulders-display/700";
+@import "@fontsource/big-shoulders-display/800";
+@import "@fontsource-variable/ibm-plex-sans/wght.css";
+@import "@fontsource/ibm-plex-mono/400";
+@import "@fontsource/ibm-plex-mono/500";
 
 /*
- * Triad DMS design tokens. These are the only colours that exist: Tailwind's default
- * palette is reset, so a stray "bg-green-500" simply won't compile into anything.
- * Solid colours only: no gradients, no glows.
+ * Triad DMS design tokens: "The Dossier". Tailwind's default palette is reset, so these are the
+ * only colours that exist. Solid colours only: no gradients, no blur, no glow.
  */
 @theme {
   --color-*: initial;
-  --color-white: #ffffff;
+  --color-paper: #f7f6f2;
+  --color-ink: #0b0b0f;
   --color-primary: #605be5;
-  --color-primary-hover: #4f49d6;
   --color-plum: #2a0831;
-  --color-plum-hover: #3a1043;
-  --color-lavender: #f3f2fd;
-  --color-ink: #0a0a0a;
-  --color-muted: #6b6b80;
-  --color-line: #e7e5f5;
-  --color-danger: #dc2626;
+  --color-rule: #d9d6cc;
+  --color-muted: #5e5b66;
+  --color-danger: #d92d20;
+  /* White is reserved for document sheets, form inputs and the white logo. */
+  --color-white: #ffffff;
 
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* Older app screens still use these until they move to the dossier system. */
+  --color-lavender: #f3f2fd;
+  --color-line: #e7e5f5;
+
+  --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --ease-file: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* The only elevation: a hard offset shadow, like a sheet lying on a desk. */
+  --shadow-sheet: 6px 6px 0 var(--color-ink);
+  --shadow-sheet-sm: 4px 4px 0 var(--color-ink);
 
   --radius-card: 1.25rem;
   --radius-panel: 1.5rem;
-
   --shadow-soft: 0 1px 2px rgb(42 8 49 / 0.04), 0 6px 20px rgb(42 8 49 / 0.04);
   --shadow-lift: 0 2px 4px rgb(42 8 49 / 0.04), 0 16px 36px rgb(42 8 49 / 0.09);
   --shadow-pop: 0 24px 64px rgb(42 8 49 / 0.18);
 
-  --animate-marquee: marquee 38s linear infinite;
   --animate-scan: scan 1.6s ease-in-out infinite;
   --animate-blink: blink 1s steps(1) infinite;
   --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
-  --animate-fade-in: fade-in 0.15s ease-out;
-  --animate-dialog-in: dialog-in 0.18s ease-out;
-  --animate-sheet-in: sheet-in 0.22s ease-out;
-
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
-    }
-  }
+  --animate-fade-in: fade-in 0.2s var(--ease-file);
+  --animate-dialog-in: dialog-in 0.3s var(--ease-file);
+  --animate-sheet-in: sheet-in 0.3s var(--ease-file);
 
   @keyframes scan {
     0%,
@@ -94,6 +95,13 @@
   }
 }
 
+/* The clearance lens radius is registered so it can transition smoothly inside clip-path. */
+@property --lens-r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
 /* The upload drop zone's dashed border marches while a file is dragged over it. */
 @keyframes march {
   to {
@@ -105,43 +113,181 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    /* Anchored sections land below the sticky classification strip and nav. */
+    scroll-padding-top: 6rem;
   }
 
   body {
-    @apply bg-lavender font-sans text-ink antialiased;
-    font-feature-settings: "ss01", "cv11";
+    @apply bg-paper font-sans text-ink antialiased;
   }
 
   ::selection {
-    background: rgb(96 91 229 / 0.18);
+    background: var(--color-primary);
+    color: var(--color-white);
   }
 
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* On dark surfaces the ring turns Paper so it stays visible. */
+  .on-dark :focus-visible {
+    outline-color: var(--color-paper);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   mark {
-    @apply rounded-sm px-0.5 text-ink;
+    @apply px-0.5 text-ink;
     background: rgb(96 91 229 / 0.16);
   }
 
-  /* Native number/date inputs keep their own controls; this just aligns them with the theme. */
   input[type="date"]::-webkit-calendar-picker-indicator {
     opacity: 0.55;
   }
 }
 
-/* Small mono uppercase label: "[ 01 ] UPLOAD", "DIV-A", "SYS.STATUS". */
+/*
+ * Named text styles. Every size lands on a Tailwind scale step.
+ * Display styles are Big Shoulders, uppercase, and never used below 30px.
+ */
+@utility display-xl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 3.75rem;
+  line-height: 1;
+  text-wrap: balance;
+
+  @media (width >= 48rem) {
+    font-size: 4.5rem;
+  }
+  @media (width >= 80rem) {
+    font-size: 6rem;
+  }
+}
+
+@utility display-l {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 3rem;
+  line-height: 1;
+  text-wrap: balance;
+
+  @media (width >= 64rem) {
+    font-size: 4.5rem;
+  }
+}
+
+@utility display-m {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 2.25rem;
+  line-height: 1;
+  text-wrap: balance;
+
+  @media (width >= 64rem) {
+    font-size: 3.75rem;
+  }
+}
+
+@utility display-s {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  text-wrap: balance;
+
+  @media (width >= 64rem) {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+  }
+}
+
+@utility heading-5 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 600;
+}
+
+@utility heading-6 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+@utility title-3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+}
+
+@utility body-lead {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 400;
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+@utility body-3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  text-wrap: pretty;
+}
+
+@utility body-6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+}
+
+@utility button-md {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+
+  @media (width >= 48rem) {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* File references, form numbers, chips, timestamps: "FILE 02 / COMPARTMENTS", "DIV-A". */
 @utility label-mono {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Huge, tight headline. */
+/* IDs, sizes, audit rows, spec values. Tabular so columns of numbers line up. */
+@utility data-mono {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Older app screens still use the utilities below until they move to the dossier system. */
 @utility headline {
   font-weight: 600;
   letter-spacing: -0.04em;
@@ -162,39 +308,28 @@
   color: rgb(255 255 255 / 0.86);
 }
 
-/* Hover lift: rises a little and the border turns indigo. */
 @utility lift {
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.2s var(--ease-file),
+    border-color 0.2s var(--ease-file);
 
   &:hover {
     transform: translateY(-4px);
     border-color: var(--color-primary);
-    box-shadow: var(--shadow-lift);
   }
-}
-
-/* Solid dot grid drawn with an SVG tile (no gradient functions). Hero sections only. */
-@utility dot-grid {
-  background-color: var(--color-lavender);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.5' cy='1.5' r='1.1' fill='%23d6d3ee'/%3E%3C/svg%3E");
-  background-size: 22px 22px;
 }
 
 @utility dot-grid-dark {
   background-color: var(--color-plum);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='1.5' cy='1.5' r='1.1' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E");
-  background-size: 22px 22px;
 }
 
-/* Sonner toasts in the house style. */
+/* Sonner toasts as small filed slips: square, hard edge, no blur. */
 [data-sonner-toast][data-styled="true"] {
   font-family: var(--font-sans);
-  border-radius: 1rem;
-  border: 1px solid var(--color-line);
-  box-shadow: var(--shadow-lift);
+  border-radius: 0;
+  border: 1px solid var(--color-ink);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-sheet-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
