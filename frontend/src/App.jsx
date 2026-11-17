@@ -1,4 +1,3 @@
-import { GearSix } from "@phosphor-icons/react";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import ProtectedRoute, { FullPageSpinner, GuestRoute } from "./components/ProtectedRoute";
@@ -15,7 +14,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const DocumentPage = lazy(() => import("./pages/DocumentPage"));
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 const AccessPage = lazy(() => import("./pages/AccessPage"));
-const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 export default function App() {
   return (
@@ -36,9 +35,8 @@ export default function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/access" element={<AccessPage />} />
             <Route path="/documents/:id" element={<DocumentPage />} />
-            <Route element={<ProtectedRoute adminOnly />}>
-              <Route path="/settings" element={<PlaceholderPage title="Settings" Icon={GearSix} />} />
-            </Route>
+            {/* Members who open it see a "you need admin access" page rather than a silent redirect. */}
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
 

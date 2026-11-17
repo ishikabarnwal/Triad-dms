@@ -10,9 +10,9 @@ export function FullPageSpinner() {
   );
 }
 
-/** Renders child routes only for logged-in users (and only for admins when adminOnly is set). */
-export default function ProtectedRoute({ adminOnly = false }) {
-  const { user, ready, isAdmin } = useAuth();
+/** Renders child routes only for logged-in users. Admin-only pages check the role themselves. */
+export default function ProtectedRoute() {
+  const { user, ready } = useAuth();
   const location = useLocation();
 
   if (!ready) {
@@ -20,9 +20,6 @@ export default function ProtectedRoute({ adminOnly = false }) {
   }
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
-  }
-  if (adminOnly && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
   }
   return <Outlet />;
 }
