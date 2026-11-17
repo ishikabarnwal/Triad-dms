@@ -1,6 +1,7 @@
 import { CloudArrowUp, FileImage, FilePdf, Warning, X } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { errorInfo } from "@/api/client";
 import { uploadDocument } from "@/api/documents";
@@ -96,27 +97,56 @@ function missingRequired(fields, values) {
   return errors;
 }
 
-/** Calm, specific confirmation: where the file went and what OCR managed to read. */
-function announce(document) {
-  const filed = `${document.title} uploaded to ${document.division}.`;
-  if (document.ocr_status === "done") {
-    const pages = document.page_count === 1 ? "1 page" : `${document.page_count} pages`;
-    toast.success(`${filed} OCR read ${pages}.`);
-  } else if (document.ocr_status === "failed") {
-    toast(filed, { description: "Its text couldn't be read, so it can be found by its title and details only." });
-  } else {
-    toast.success(filed, { description: "Text extraction is turned off, so it wasn't read." });
+// API error codes about the file itself, so they belong under the drop zone.
+const FILE_ERRORS = new Set(["file_required", "empty_file", "unsupported_file_type", "invalid_file", "file_too_large"]);
+// Division errors arrive without a field name; they belong to whichever field holds the division.
+const DIVISION_ERRORS = new Set(["division_forbidden", "unknown_division", "division_required"]);
+
+/**
+ * Decide where an upload error is shown: under the file, under a field, or at the top of the form.
+ * Returns { fileError, fieldErrors, formError }.
+ */
+function placeUploadError(info, fields, maxMb) {
+  if (FILE_ERRORS.has(info.code) || info.status === 413) {
+    const message = info.status === 413 ? `That file is larger than ${maxMb} MB.` : info.message;
+    return { fileError: message, fieldErrors: {}, formError: "" };
   }
+  const divisionField = fields.find(isDivisionField);
+  if (DIVISION_ERRORS.has(info.code) && divisionField) {
+    return { fileError: "", fieldErrors: { [divisionField.key]: info.message }, formError: "" };
+  }
+  const shown = new Set(["title", ...fields.map((field) => field.key)]);
+  const placed = Object.keys(info.fieldErrors).some((key) => shown.has(key));
+  return { fileError: "", fieldErrors: info.fieldErrors, formError: placed ? "" : info.message };
+}
+
+/** Calm confirmation with a way straight to the new document. */
+function announce(document, openDocument) {
+  const action = { label: "View document", onClick: () => openDocument(document.id) };
+  if (document.ocr_status === "failed") {
+    toast("Uploaded. Text could not be read from this file.", {
+      description: `${document.title} is in ${document.division} and can be found by its title and details.`,
+      action,
+    });
+    return;
+  }
+  let description = "Text extraction is turned off, so its text wasn't read.";
+  if (document.ocr_status === "done") {
+    description = document.page_count === 1 ? "Text read from 1 page." : `Text read from ${document.page_count} pages.`;
+  }
+  toast.success(`${document.title} uploaded to ${document.division}.`, { description, action });
 }
 
 export default function UploadModal({ open, fields, onOpenChange, onUploaded }) {
   const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const config = usePublicConfig();
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [values, setValues] = useState({});
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
+  const [fileError, setFileError] = useState("");
   const [phase, setPhase] = useState("form");
   const [progress, setProgress] = useState(0);
 
@@ -131,6 +161,7 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
       setValues(initialValues(fields, user));
       setErrors({});
       setFormError("");
+      setFileError("");
       setPhase("form");
       setProgress(0);
     }
@@ -144,11 +175,11 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
     onDrop: (accepted, rejected) => {
       if (rejected.length) {
         const tooBig = rejected[0].errors.some((e) => e.code === "file-too-large");
-        setFormError(tooBig ? `That file is larger than ${config.max_upload_mb} MB.` : `That type isn't supported. Use ${formats}.`);
+        setFileError(tooBig ? `That file is larger than ${config.max_upload_mb} MB.` : `That type isn't supported. Use ${formats}.`);
         return;
       }
       setFile(accepted[0]);
-      setFormError("");
+      setFileError("");
       setTitle((current) => current || fileStem(accepted[0].name));
     },
   });
@@ -163,7 +194,7 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
   const submit = async (event) => {
     event.preventDefault();
     if (!file) {
-      setFormError("Choose a file to upload.");
+      setFileError("Choose a file to upload.");
       return;
     }
     const missing = missingRequired(fields, values);
@@ -174,6 +205,7 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
     const metadata = Object.fromEntries(Object.entries(values).filter(([, value]) => String(value ?? "").trim() !== ""));
     setPhase("uploading");
     setFormError("");
+    setFileError("");
     try {
       const response = await uploadDocument({ file, title: title.trim(), metadata }, (percent) => {
         setProgress(percent);
@@ -181,13 +213,14 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
           setPhase("extracting");
         }
       });
-      announce(response.data);
+      announce(response.data, (id) => navigate(`/documents/${id}`));
       onUploaded(response.data);
       onOpenChange(false);
     } catch (error) {
-      const info = errorInfo(error);
-      setErrors(info.fieldErrors);
-      setFormError(info.message);
+      const placed = placeUploadError(errorInfo(error), fields, config.max_upload_mb);
+      setErrors(placed.fieldErrors);
+      setFileError(placed.fileError);
+      setFormError(placed.formError);
       setPhase("form");
     }
   };
@@ -213,43 +246,54 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
                 </p>
               )}
 
-              {file ? (
-                <div className="flex items-center gap-3 rounded-xl border border-line p-3">
-                  <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    {file.type === "application/pdf" ? <FilePdf className="size-5" aria-hidden="true" /> : <FileImage className="size-5" aria-hidden="true" />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{file.name}</p>
-                    <p className="text-xs text-muted">{formatBytes(file.size)}</p>
+              <div>
+                {file ? (
+                  <div className={cn("flex items-center gap-3 rounded-xl border p-3", fileError ? "border-danger" : "border-line")}>
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      {file.type === "application/pdf" ? <FilePdf className="size-5" aria-hidden="true" /> : <FileImage className="size-5" aria-hidden="true" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold">{file.name}</p>
+                      <p className="text-xs text-muted">{formatBytes(file.size)}</p>
+                    </div>
+                    {!busy && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFile(null);
+                          setFileError("");
+                        }}
+                        className="cursor-pointer rounded-lg p-2 text-muted hover:bg-lavender hover:text-ink"
+                        aria-label="Remove file"
+                      >
+                        <X className="size-4" aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
-                  {!busy && (
-                    <button
-                      type="button"
-                      onClick={() => setFile(null)}
-                      className="cursor-pointer rounded-lg p-2 text-muted hover:bg-lavender hover:text-ink"
-                      aria-label="Remove file"
-                    >
-                      <X className="size-4" aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div
-                  {...getRootProps({
-                    className: cn(
-                      "flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
-                      isDragReject ? "border-danger bg-danger/5" : isDragActive ? "border-primary bg-primary/5" : "border-primary/30 bg-lavender/60 hover:border-primary/60 hover:bg-lavender",
-                    ),
-                  })}
-                >
-                  <input {...getInputProps()} />
-                  <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-white text-primary shadow-soft">
-                    <CloudArrowUp className="size-6" aria-hidden="true" />
-                  </span>
-                  <p className="font-semibold">{isDragActive ? "Drop to upload" : "Drag a file here, or click to browse"}</p>
-                  <p className="mt-1.5 text-sm text-muted">{limits}</p>
-                </div>
-              )}
+                ) : (
+                  <div
+                    {...getRootProps({
+                      className: cn(
+                        "flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
+                        isDragReject || fileError ? "border-danger bg-danger/5" : isDragActive ? "border-primary bg-primary/5" : "border-primary/30 bg-lavender/60 hover:border-primary/60 hover:bg-lavender",
+                      ),
+                    })}
+                  >
+                    <input {...getInputProps()} />
+                    <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-white text-primary shadow-soft">
+                      <CloudArrowUp className="size-6" aria-hidden="true" />
+                    </span>
+                    <p className="font-semibold">{isDragActive ? "Drop to upload" : "Drag a file here, or click to browse"}</p>
+                    <p className="mt-1.5 text-sm text-muted">{limits}</p>
+                  </div>
+                )}
+                {fileError && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-danger" role="alert">
+                    <Warning className="size-3.5 shrink-0" aria-hidden="true" />
+                    {fileError}
+                  </p>
+                )}
+              </div>
 
               {phase === "uploading" && (
                 <div>
@@ -261,8 +305,18 @@ export default function UploadModal({ open, fields, onOpenChange, onUploaded }) 
                 </div>
               )}
 
-              <Field label="Title" htmlFor="upload-title" hint="Starts as the file name.">
-                <Input id="upload-title" value={title} maxLength={200} disabled={busy} onChange={(e) => setTitle(e.target.value)} />
+              <Field label="Title" htmlFor="upload-title" hint="Starts as the file name." error={errors.title}>
+                <Input
+                  id="upload-title"
+                  value={title}
+                  maxLength={200}
+                  disabled={busy}
+                  invalid={Boolean(errors.title)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setErrors((current) => ({ ...current, title: undefined }));
+                  }}
+                />
               </Field>
 
               <fieldset>

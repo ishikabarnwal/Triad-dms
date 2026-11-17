@@ -132,6 +132,20 @@
   box-shadow: var(--shadow-lift);
 }
 
+/* Toast actions such as "View document" use the primary button style, not Sonner's black default. */
+[data-sonner-toast][data-styled="true"] [data-button]:not([data-cancel]) {
+  height: 1.875rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 600;
+}
+
+[data-sonner-toast][data-styled="true"] [data-button]:not([data-cancel]):hover {
+  background: var(--color-primary-hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
