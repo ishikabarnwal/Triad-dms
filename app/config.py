@@ -78,4 +78,3 @@ class Config:
     # Caps how many scanned pages one upload can send through tesseract, so a huge scan can't stall a worker.
     OCR_MAX_PAGES = env_int("OCR_MAX_PAGES", 25)
     OCR_PAGE_TIMEOUT = env_int("OCR_PAGE_TIMEOUT", 60)
-    SEMANTIC_SEARCH_ENABLED = env_bool("SEMANTIC_SEARCH_ENABLED", False)
