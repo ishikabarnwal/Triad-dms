@@ -92,7 +92,7 @@ export default function Hero() {
             <br />
             until you say yes.
           </motion.h1>
-          <motion.p {...enter(1)} className="mt-6 max-w-[30rem] text-lg leading-8 text-pretty text-muted">
+          <motion.p {...enter(1)} className="mt-6 max-w-[520px] text-lg leading-[1.6] text-pretty text-muted">
             Upload scans, search them by their text, and approve requests from other divisions.
           </motion.p>
           <motion.div {...enter(2)} className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">

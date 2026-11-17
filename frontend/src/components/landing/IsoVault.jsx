@@ -1,7 +1,7 @@
 /*
  * Flat isometric illustration: a vault and server block on a platform, a stack of documents on
- * top, a lock and a shield in front. All geometry goes through one projection, so every edge
- * sits at exactly 30 degrees. Details on a face are drawn flat in that face's own coordinates
+ * top, a padlock hanging on the vault door and a shield in front. All geometry goes through one
+ * projection, so every edge sits at exactly 30 degrees. Details on a face are drawn flat in that face's own coordinates
  * and mapped onto it with an SVG matrix, which keeps them in perfect perspective.
  */
 
@@ -25,7 +25,6 @@ const C = {
   ind500: "#605BE5",
   ind600: "#4C47CF",
   ind700: "#3A35A8",
-  plum300: "#A898AD",
   plum700: "#5A3961",
   plum800: "#3D1A45",
   plum900: "#2A0831",
@@ -91,11 +90,12 @@ function Shadow({ x, y, z, w, d, dx = 1, dy = 0.5, fill = C.lav200 }) {
 const PLATFORM = { x: 0, y: 0, z: 0, w: 12, d: 12, h: 0.45 };
 const FLOOR = PLATFORM.h;
 
-function Platform() {
+/** The white base. Its floor shadow is a light tint, so it's left out on dark backgrounds. */
+function Platform({ onDark }) {
   const lines = [2, 4, 6, 8, 10];
   return (
     <g>
-      <Shadow x={0} y={0} z={0} w={12} d={12} dx={0.7} dy={0.7} fill={C.lav200} />
+      {!onDark && <Shadow x={0} y={0} z={0} w={12} d={12} dx={0.7} dy={0.7} fill={C.lav200} />}
       <Box {...PLATFORM} top={C.white} left={C.lav200} right={C.lav300} />
       <g transform={topPlane(0, 0, FLOOR)} stroke={C.lav100} strokeWidth="1" vectorEffect="non-scaling-stroke">
         {lines.map((n) => (
@@ -113,28 +113,36 @@ const BLOCK = { x: 3, y: 2.5, w: 5.5, d: 5.5, z: FLOOR, h: 4.35 };
 const BLOCK_TOP = BLOCK.z + BLOCK.h;
 const RACK_UNITS = 3;
 
-/** The round vault door on the block's left face, with a four spoke wheel. */
+// The vault door sits left of centre on the block's left face, leaving room for the padlock.
+const DOOR = { cx: 2.2, cy: BLOCK.h / 2, recess: 1.6, radius: 1.36 };
+const WHEEL = { ring: 0.9, hub: 0.26, spokes: 5 };
+
+/** The round vault door on the block's left face, with a wheel: outer ring, five spokes and a hub. */
 function VaultDoor() {
-  const cx = BLOCK.w / 2;
-  const cy = BLOCK.h / 2;
-  const spokes = [45, 135, 225, 315];
-  const spokeLength = 0.72;
+  const { cx, cy } = DOOR;
+  const angles = Array.from({ length: WHEEL.spokes }, (_, index) => 90 + (360 / WHEEL.spokes) * index);
   return (
     <g transform={leftPlane(BLOCK.x, BLOCK.y + BLOCK.d, BLOCK.z)}>
-      <circle cx={cx} cy={cy} r={1.62} fill={C.ind600} />
-      <circle cx={cx} cy={cy} r={1.36} fill={C.ind400} />
-      <circle cx={cx} cy={cy} r={0.98} fill="none" stroke={C.ind300} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-      {spokes.map((angle) => {
+      <circle cx={cx} cy={cy} r={DOOR.recess} fill={C.ind600} />
+      <circle cx={cx} cy={cy} r={DOOR.radius} fill={C.ind400} />
+      {angles.map((angle) => {
         const radians = (angle * Math.PI) / 180;
-        const end = [cx + Math.cos(radians) * spokeLength, cy + Math.sin(radians) * spokeLength];
         return (
-          <g key={angle}>
-            <line x1={cx} y1={cy} x2={end[0]} y2={end[1]} stroke={C.white} strokeWidth="0.15" strokeLinecap="round" />
-            <circle cx={end[0]} cy={end[1]} r={0.13} fill={C.white} />
-          </g>
+          <line
+            key={angle}
+            x1={cx + Math.cos(radians) * WHEEL.hub}
+            y1={cy + Math.sin(radians) * WHEEL.hub}
+            x2={cx + Math.cos(radians) * WHEEL.ring}
+            y2={cy + Math.sin(radians) * WHEEL.ring}
+            stroke={C.white}
+            strokeWidth="0.13"
+            strokeLinecap="round"
+          />
         );
       })}
-      <circle cx={cx} cy={cy} r={0.24} fill={C.white} />
+      <circle cx={cx} cy={cy} r={WHEEL.ring} fill="none" stroke={C.white} strokeWidth="0.14" />
+      <circle cx={cx} cy={cy} r={WHEEL.hub} fill={C.white} />
+      <circle cx={cx} cy={cy} r={0.1} fill={C.ind400} />
     </g>
   );
 }
@@ -215,30 +223,43 @@ function DocumentStack() {
   );
 }
 
-const LOCK = { x: 1, y: 9, w: 1.7, d: 0.9, z: FLOOR, h: 1.5 };
+// The padlock hangs on the vault face, right of the door. Positions are in the face's own units:
+// u runs along the face from its left edge, v runs up from the floor.
+const LOCK = { u: 4.05, v: 1.15, w: 1.1, h: 1.1, depth: 0.55 };
+const HASP = { u: 4.25, v: 2.62, w: 0.7, h: 0.82 };
+const FACE_Y = BLOCK.y + BLOCK.d;
 
 /**
- * A padlock standing in front of the vault: shackle first, so the body covers its legs.
+ * A padlock hanging from a hasp plate on the vault face. Painted back to front: the shadow and
+ * plate on the face, then the shackle in a plane just in front of it, then the body.
  * The plane flips the y axis, so the arc's sweep flag is 0 to bend it upwards on screen.
  */
 function Padlock() {
-  const lockTop = LOCK.z + LOCK.h;
+  const x = BLOCK.x + LOCK.u;
+  const z = BLOCK.z + LOCK.v;
+  const shackleLeft = LOCK.w * 0.25;
+  const shackleRight = LOCK.w * 0.75;
+  const radius = (shackleRight - shackleLeft) / 2;
   return (
     <g>
-      <Shadow x={LOCK.x} y={LOCK.y} z={FLOOR} w={LOCK.w} d={LOCK.d} dx={0.55} dy={0.3} />
-      <g transform={leftPlane(LOCK.x, LOCK.y + LOCK.d / 2, lockTop)}>
+      <g transform={leftPlane(BLOCK.x, FACE_Y, BLOCK.z)}>
+        <rect x={LOCK.u + 0.2} y={LOCK.v - 0.16} width={LOCK.w} height={LOCK.h} fill={C.ind600} />
+        <rect x={HASP.u} y={HASP.v} width={HASP.w} height={HASP.h} rx={0.08} fill={C.ind600} />
+        <rect x={HASP.u + HASP.w / 2 - 0.1} y={HASP.v + 0.18} width={0.2} height={0.42} rx={0.1} fill={C.ind700} />
+      </g>
+      <g transform={leftPlane(x, FACE_Y + LOCK.depth / 2, z + LOCK.h)}>
         <path
-          d="M0.4 -0.1 L0.4 0.62 A0.45 0.45 0 0 0 1.3 0.62 L1.3 -0.1"
+          d={`M${shackleLeft} -0.1 L${shackleLeft} 0.5 A${radius} ${radius} 0 0 0 ${shackleRight} 0.5 L${shackleRight} -0.1`}
           fill="none"
-          stroke={C.plum300}
-          strokeWidth="0.24"
+          stroke={C.lav300}
+          strokeWidth="0.17"
           strokeLinecap="round"
         />
       </g>
-      <Box {...LOCK} top={C.plum700} left={C.plum800} right={C.plum900} />
-      <g transform={leftPlane(LOCK.x, LOCK.y + LOCK.d, LOCK.z)}>
-        <circle cx={LOCK.w / 2} cy={0.88} r={0.17} fill={C.lav100} />
-        <rect x={LOCK.w / 2 - 0.065} y={0.42} width={0.13} height={0.42} rx={0.06} fill={C.lav100} />
+      <Box x={x} y={FACE_Y} z={z} w={LOCK.w} d={LOCK.depth} h={LOCK.h} top={C.plum700} left={C.plum800} right={C.plum900} />
+      <g transform={leftPlane(x, FACE_Y + LOCK.depth, z)}>
+        <circle cx={LOCK.w / 2} cy={0.62} r={0.13} fill={C.lav100} />
+        <rect x={LOCK.w / 2 - 0.05} y={0.3} width={0.1} height={0.32} rx={0.05} fill={C.lav100} />
       </g>
     </g>
   );
@@ -276,17 +297,17 @@ function Shield() {
 }
 
 /** Painter's order: platform, then the block and what sits on it, then the objects in front. */
-export default function IsoVault({ className }) {
+export default function IsoVault({ className, onDark = false }) {
   return (
     <svg viewBox="0 0 560 420" className={className} role="img" aria-labelledby="iso-vault-title">
       <title id="iso-vault-title">A secure vault with a stack of documents, a padlock and a shield</title>
-      <Platform />
+      <Platform onDark={onDark} />
       <Shadow x={BLOCK.x} y={BLOCK.y} z={FLOOR} w={BLOCK.w} d={BLOCK.d} dx={1.2} dy={0.5} />
       <Box {...BLOCK} top={C.ind200} left={C.ind500} right={C.ind600} />
       <VaultDoor />
       <RackFace />
-      <DocumentStack />
       <Padlock />
+      <DocumentStack />
       <Shield />
     </svg>
   );
