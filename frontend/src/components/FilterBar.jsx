@@ -56,7 +56,7 @@ function TextFilter({ field, value, onChange }) {
 }
 
 /** One control per filterable field, shaped by its type. */
-function FieldFilter({ field, value, onChange }) {
+export function FieldFilter({ field, value, onChange }) {
   const active = Boolean(value);
   if (field.type === "select") {
     return (
