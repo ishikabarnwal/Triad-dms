@@ -17,7 +17,7 @@ export default function AuthLayout({ children }) {
       <section className="dot-grid-dark m-3 hidden w-[44%] flex-col justify-between rounded-[28px] p-10 text-white lg:flex xl:p-12">
         <div className="flex items-center justify-between">
           <Link to="/" aria-label="Triad DMS home">
-            <Logo tone="dark" />
+            <Logo />
           </Link>
           <span className="label-mono flex items-center gap-2 text-white/55">
             <span className="size-1.5 rounded-full bg-primary" /> SYS.ONLINE
@@ -51,7 +51,7 @@ export default function AuthLayout({ children }) {
       <section className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6">
         <div className="mb-6 flex w-full max-w-[420px] items-center justify-between">
           <Link to="/" className="lg:hidden" aria-label="Triad DMS home">
-            <Logo />
+            <Logo bare />
           </Link>
           <Link to="/" className="label-mono ml-auto inline-flex items-center gap-1.5 text-muted hover:text-ink">
             <ArrowLeft className="size-3.5" aria-hidden="true" />

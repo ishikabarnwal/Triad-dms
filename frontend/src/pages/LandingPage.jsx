@@ -1,22 +1,26 @@
-import ClassificationStrip from "@/components/dossier/ClassificationStrip";
-import { CLASSIFICATION } from "@/components/landing/content";
+import { lazy, Suspense } from "react";
 import Hero from "@/components/landing/Hero";
-import LandingHeader from "@/components/landing/LandingHeader";
+import LandingNav from "@/components/landing/LandingNav";
+
+// The sections below the hero load as a separate chunk while the first screen is already visible.
+const BelowFold = lazy(() => import("@/components/landing/BelowFold"));
 
 export default function LandingPage() {
   return (
-    <div className="min-h-dvh overflow-x-clip bg-paper">
+    <div className="overflow-x-clip bg-lavender">
       <a
-        href="#main"
-        className="label-mono sr-only bg-primary px-4 py-3 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50"
+        href="#features"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-white"
       >
         Skip to content
       </a>
-      <LandingHeader />
-      <main id="main" tabIndex={-1} className="outline-none">
+      <LandingNav />
+      <main>
         <Hero />
+        <Suspense fallback={<div className="h-screen" />}>
+          <BelowFold />
+        </Suspense>
       </main>
-      <ClassificationStrip as="footer" marking={CLASSIFICATION.full} short={CLASSIFICATION.short} />
     </div>
   );
 }
