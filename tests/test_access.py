@@ -411,6 +411,47 @@ def test_inbox_status_filter_and_newest_first(access, tokens, more_users, doc_a)
     assert [r["id"] for r in everything["requests"]] == [second, first]
 
 
+def test_inbox_can_be_narrowed_to_one_document(access, tokens, more_users, doc_a, upload):
+    other = upload(text_pdf("Second Division A file"), title="Alpha Two", headers=tokens["a"]).get_json()["id"]
+    first = access.request(tokens["b"], doc_a).get_json()["id"]
+    access.request(tokens["b"], other)
+    access.decide("reject", tokens["a"], first)
+
+    history = access.listing("inbox", tokens["a"], f"?status=all&doc_id={doc_a}")
+
+    assert [r["id"] for r in history["requests"]] == [first]
+    assert history["requests"][0]["status"] == "rejected"
+
+
+def test_inbox_document_filter_keeps_division_scope(access, tokens, more_users, doc_a):
+    access.request(tokens["b"], doc_a)
+
+    assert access.listing("inbox", more_users["b2"], f"?status=all&doc_id={doc_a}")["total"] == 0
+
+
+def test_inbox_unknown_doc_id_matches_nothing(access, tokens, doc_a):
+    access.request(tokens["b"], doc_a)
+
+    assert access.listing("inbox", tokens["a"], "?status=all&doc_id=nope")["total"] == 0
+
+
+def test_details_carry_latest_request_and_manage_flag(access, tokens, doc_a):
+    request_id = access.request(tokens["b"], doc_a).get_json()["id"]
+    access.decide("reject", tokens["a"], request_id, note="Not needed for this exercise")
+
+    requester = access.details(tokens["b"], doc_a)
+    owner = access.details(tokens["a"], doc_a)
+    admin = access.details(tokens["admin"], doc_a)
+
+    assert requester["access_request"]["status"] == "rejected"
+    assert requester["access_request"]["decision_note"] == "Not needed for this exercise"
+    assert requester["access_request"]["created_at"]
+    assert requester["can_manage_access"] is False
+    assert owner["access_request"] is None
+    assert owner["can_manage_access"] is True
+    assert admin["can_manage_access"] is True
+
+
 def test_inbox_invalid_status_is_400(client, tokens):
     assert client.get("/api/access/inbox?status=maybe", headers=tokens["a"]).status_code == 400
 

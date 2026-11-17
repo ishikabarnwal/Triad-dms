@@ -95,8 +95,10 @@ def inbox_scope(user):
 
 
 def paged_requests(base_query, query):
-    """Run a request list query with status filter and pagination, newest first."""
+    """Run a request list query with status and document filters and pagination, newest first."""
     mongo_query = {**base_query, **status_condition(query.status)}
+    if query.doc_id:
+        mongo_query["document_id"] = parse_object_id(query.doc_id)
     collection = get_db().access_requests
     total = collection.count_documents(mongo_query)
     cursor = (
@@ -280,7 +282,10 @@ def revoke():
 @access_bp.get("/inbox")
 @login_required
 def inbox():
-    """Requests for my division's documents (all divisions for the super admin). Default ?status=pending."""
+    """Requests for my division's documents (all divisions for the super admin). Default ?status=pending.
+
+    ?doc_id= narrows it to one document, which the details page uses for its access history.
+    """
     query = AccessListQuery.model_validate(request.args.to_dict())
     return paged_requests(inbox_scope(g.current_user), query)
 

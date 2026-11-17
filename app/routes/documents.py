@@ -12,7 +12,7 @@ from app.db import get_db, get_fs
 from app.files import MIME_TYPES, clean_filename, detect_kind
 from app.filters import document_filters
 from app.metadata import active_fields, division_field, is_blank, search_blob, validate_metadata
-from app.models import isoformat, serialize_document
+from app.models import isoformat, serialize_access_request, serialize_document
 from app.ocr import extract_text
 from app.schemas import ListQuery, UploadForm, reserved_args
 from app.utils import (
@@ -20,6 +20,7 @@ from app.utils import (
     ApiError,
     access_status,
     approved_document_ids,
+    can_decide,
     can_download,
     division_names,
     document_access,
@@ -29,6 +30,7 @@ from app.utils import (
     latest_requests,
     login_required,
     optional_user,
+    request_state,
     utcnow,
     write_audit,
 )
@@ -131,12 +133,18 @@ def list_conditions(query, fields, user):
     return conditions
 
 
-def access_payload(status, latest_request):
-    """Extra access fields for the details view."""
+def access_payload(user, document, status, latest_request):
+    """Extra access fields for the details view.
+
+    `access_request` is the viewer's latest request in full, so the page can show when it was
+    sent and the reviewer's note. `can_manage_access` tells the page to load the request history.
+    """
     return {
         "can_request_access": status in REQUESTABLE_STATUSES,
+        "can_manage_access": can_decide(user, {"owner_division": document["division"]}),
         "access_request_id": str(latest_request["_id"]) if latest_request else None,
         "access_expires_at": isoformat(latest_request.get("expires_at")) if latest_request else None,
+        "access_request": serialize_access_request(latest_request, request_state(latest_request)) if latest_request else None,
     }
 
 
@@ -312,10 +320,11 @@ def list_documents():
 def document_details(doc_id):
     """Document details with can_download and access_status. OCR text only if the user has access."""
     document = get_document_or_404(doc_id)
-    status, latest_request = document_access(g.current_user, document)
+    user = g.current_user
+    status, latest_request = document_access(user, document)
     allowed = can_download(status)
     body = serialize_document(document, (status, allowed), include_ocr_text=allowed)
-    return jsonify({**body, **access_payload(status, latest_request)})
+    return jsonify({**body, **access_payload(user, document, status, latest_request)})
 
 
 @documents_bp.get("/<doc_id>/download")
