@@ -1,19 +1,18 @@
-import { FileText, Search, Settings, ShieldCheck } from "lucide-react";
+import { FileText, GearSix, MagnifyingGlass, ShieldCheck } from "@phosphor-icons/react";
 import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import AppLayout from "./components/AppLayout";
 import ProtectedRoute, { FullPageSpinner, GuestRoute } from "./components/ProtectedRoute";
-import LoginPage from "./pages/LoginPage";
-import NotFoundPage from "./pages/NotFoundPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import SignupPage from "./pages/SignupPage";
-import TermsPage from "./pages/TermsPage";
 
-// The landing page (smooth scroll, animations) and the dashboard (charts) are the heaviest
-// screens, so each is downloaded only when it's first opened.
+// Every screen is its own download, so a visitor only fetches the pages they actually open.
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const AppLayout = lazy(() => import("./components/AppLayout"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const PlaceholderPage = lazy(() => import("./pages/PlaceholderPage"));
 
 export default function App() {
   return (
@@ -31,11 +30,11 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/search" element={<PlaceholderPage code="[ SEARCH ]" title="Search" Icon={Search} />} />
-            <Route path="/access" element={<PlaceholderPage code="[ ACCESS ]" title="Access requests" Icon={ShieldCheck} />} />
-            <Route path="/documents/:id" element={<PlaceholderPage code="[ DOCUMENT ]" title="Document" Icon={FileText} />} />
+            <Route path="/search" element={<PlaceholderPage title="Search" Icon={MagnifyingGlass} />} />
+            <Route path="/access" element={<PlaceholderPage title="Access requests" Icon={ShieldCheck} />} />
+            <Route path="/documents/:id" element={<PlaceholderPage title="Document" Icon={FileText} />} />
             <Route element={<ProtectedRoute adminOnly />}>
-              <Route path="/settings" element={<PlaceholderPage code="[ ADMIN ]" title="Settings" Icon={Settings} />} />
+              <Route path="/settings" element={<PlaceholderPage title="Settings" Icon={GearSix} />} />
             </Route>
           </Route>
         </Route>
