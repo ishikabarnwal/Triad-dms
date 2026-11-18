@@ -49,7 +49,7 @@ Load the demo data with `python -m app.demo_seed --reset`.
 
 | Suite | Command | Result |
 |---|---|---|
-| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 392 passed |
+| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 393 passed |
 | Frontend unit tests | `cd frontend && npm ci && npm test` | 6 passed |
 | Evaluators' script | `python test_api.py` | 1 of 1 passed |
 | Extended evaluator-style script | `python test_api_extended.py` | 28 of 28 passed |
@@ -100,7 +100,7 @@ Triad-dms/
 │   ├── nginx.conf           # serves the build and proxies /api to the backend (Docker)
 │   ├── vercel.json          # the same proxying on Vercel
 │   └── Dockerfile
-├── tests/                   # pytest suite (392 tests)
+├── tests/                   # pytest suite (393 tests)
 ├── docs/                    # these guides, plus screenshots/
 ├── test_api.py              # evaluators' script, unchanged
 ├── test_api_extended.py     # extended evaluator-style checks

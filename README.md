@@ -13,17 +13,19 @@ A document management system with dynamic metadata, division-based access contro
 
 ## Live demo
 
-Live demo: coming soon
+Live demo: **https://triad-dms.vercel.app** (API health: https://triad-dms-api.onrender.com/api/health)
+
+Hosted on free tiers (Vercel, Render, MongoDB Atlas). If the site has been idle, the first request can take about a minute while the API wakes up.
 
 | Account | Email | Division | Password |
 |---|---|---|---|
-| Super admin | `admin@example.com` (username `admin`) | Headquarters | the `ADMIN_PASSWORD` in your `.env` |
+| Super admin | `admin@example.com` (username `admin`) | Headquarters | Admin credentials for the live demo are shared with the evaluators separately |
 | Asha Verma | `asha.verma@example.com` | Division A | `Demo@12345` |
 | Ravi Menon | `ravi.menon@example.com` | Division A | `Demo@12345` |
 | Meera Rao | `meera.rao@example.com` | Division B | `Demo@12345` |
 | Arjun Singh | `arjun.singh@example.com` | Division B | `Demo@12345` |
 
-These are demo credentials only. Never reuse them on a real deployment.
+The four demo users work on the live site and on a local stack loaded with the demo data. Locally, the admin password is the `ADMIN_PASSWORD` in your `.env`. These are demo credentials only. Never reuse them on a real deployment.
 
 ## What it does
 
@@ -61,7 +63,7 @@ Open http://localhost:3000. The API is at http://localhost:5000/api. Running wit
 
 | Suite | Command | Result |
 |---|---|---|
-| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 392 passed |
+| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 393 passed |
 | Frontend unit tests | `cd frontend && npm ci && npm test` | 6 passed |
 | Evaluators' script | `python test_api.py` | 1 of 1 passed |
 | Extended evaluator-style script | `python test_api_extended.py` | 28 of 28 passed |
@@ -93,4 +95,4 @@ The full explanation is in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#notes-for-e
 **Ishika Barnwal**
 
 - GitHub: [github.com/ishikabarnwal](https://github.com/ishikabarnwal)
-- LinkedIn: _add link_
+- LinkedIn: [linkedin.com/in/ishika-barnwal-](https://www.linkedin.com/in/ishika-barnwal-/)
