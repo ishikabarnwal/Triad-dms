@@ -7,9 +7,9 @@ GridFS, read by OCR and audited exactly like a real upload. After each step the 
 are moved back in time, so the dashboard, activity feed and audit log show three weeks of work
 instead of everything happening "just now".
 
---reset first removes documents, stored files, access requests, audit logs and every user except
-admins. Divisions, metadata fields and admin accounts are never touched. Without --reset the seed
-refuses to run on a database that already has documents.
+--reset first removes documents, stored files, access requests, audit logs, every member and the
+shareable Demo Admin. Divisions, metadata fields, the super admin from ADMIN_EMAIL and any other real
+admin are never touched. Without --reset the seed refuses to run on a database that already has documents.
 """
 
 import argparse
@@ -35,6 +35,11 @@ USERS = {
     "meera": {"name": "Meera Rao", "email": "meera.rao@example.com", "username": "meera", "division": "Division B"},
     "arjun": {"name": "Arjun Singh", "email": "arjun.singh@example.com", "username": "arjun", "division": "Division B"},
 }
+
+# A shareable admin for the live demo. The real super admin (ADMIN_EMAIL / ADMIN_PASSWORD) stays private;
+# this account signs up like anyone else and is then promoted by that super admin.
+DEMO_ADMIN = {"name": "Demo Admin", "email": "demo.admin@example.com", "division": "Headquarters"}
+PEOPLE = {**USERS, "demo_admin": DEMO_ADMIN}
 
 # Each document: who uploads it and when (days ago, IST time), its metadata, its format, and its
 # pages as (heading, paragraphs). Scans are rendered to an image and roughened so OCR has real work.
@@ -514,7 +519,7 @@ class DemoSeeder:
 
     def register(self, key, when):
         """Create a demo user through the sign up endpoint."""
-        user = USERS[key]
+        user = PEOPLE[key]
         body = {**user, "password": DEMO_PASSWORD}
         response, stamp = self.step(when, lambda: self.call("post", "/auth/register", json=body))
         payload = response.get_json()
@@ -524,14 +529,20 @@ class DemoSeeder:
 
     def sign_in(self, key, when, password=DEMO_PASSWORD):
         """A sign in (or a failed one, with the wrong password) at a point in the past."""
-        body = {"email": USERS[key]["email"], "password": password}
+        body = {"email": PEOPLE[key]["email"], "password": password}
 
         def login():
             return self.client.post("/api/auth/login", json=body)
 
         response, stamp = self.step(when, login)
         if response.status_code == 200:
-            self.db.users.update_one({"email": USERS[key]["email"]}, {"$set": {"last_login_at": stamp}})
+            self.db.users.update_one({"email": PEOPLE[key]["email"]}, {"$set": {"last_login_at": stamp}})
+
+    def add_demo_admin(self, joined, promoted):
+        """Demo Admin signs up as a member, then the super admin promotes them through the users API."""
+        self.register("demo_admin", joined)
+        user_id = self.user_ids["demo_admin"]
+        self.step(promoted, lambda: self.call("put", f"/admin/users/{user_id}", "admin", json={"role": "admin"}))
 
     # -- documents --
 
@@ -606,6 +617,7 @@ class DemoSeeder:
         self.admin_sign_in(self.at((24, "09:00")))
         for index, key in enumerate(USERS):
             self.register(key, self.at((23 - index, "10:30")))
+        self.add_demo_admin(self.at((19, "09:30")), self.at((19, "09:45")))
 
         for spec in sorted(DOCUMENTS, key=lambda item: -item["when"][0]):
             who = spec["uploader"]
@@ -626,16 +638,22 @@ class DemoSeeder:
         self.sign_in("ravi", self.at((2, "08:58")), password="wrong-password")
         self.sign_in("ravi", self.at((2, "08:59")))
         self.sign_in("meera", self.at((1, "11:05")))
+        self.sign_in("demo_admin", self.at((1, "15:20")))
 
 
-def reset(db):
-    """Remove everything the demo creates. Divisions, metadata fields and admins stay."""
+def reset(db, keep_email):
+    """Remove everything the demo creates. Divisions, metadata fields and real admins stay.
+
+    Demo Admin is removed too (it is recreated), but never the account at `keep_email`, the
+    configured super admin.
+    """
+    demo_users = {"$or": [{"role": {"$ne": "admin"}}, {"email": DEMO_ADMIN["email"]}]}
     removed = {
         "documents": db.documents.delete_many({}).deleted_count,
         "files": db.fs.files.delete_many({}).deleted_count,
         "access_requests": db.access_requests.delete_many({}).deleted_count,
         "audit_logs": db.audit_logs.delete_many({}).deleted_count,
-        "users": db.users.delete_many({"role": {"$ne": "admin"}}).deleted_count,
+        "users": db.users.delete_many({"$and": [demo_users, {"email": {"$ne": keep_email}}]}).deleted_count,
     }
     db.fs.chunks.delete_many({})
     return removed
@@ -650,6 +668,7 @@ def summarise(db):
     statuses["expired"] = expired
     return {
         "users": db.users.count_documents({"role": {"$ne": "admin"}}),
+        "demo_admin": db.users.count_documents({"email": DEMO_ADMIN["email"], "role": "admin"}) == 1,
         "documents": len(documents),
         "by_division": dict(Counter(document["division"] for document in documents)),
         "scanned_images": sum(1 for document in documents if document["content_type"].startswith("image/")),
@@ -666,7 +685,7 @@ def run_demo_seed(app, reset_first=False):
         raise DemoSeedRefused("This database already has documents. Run with --reset to replace them with the demo data.")
     seeder = DemoSeeder(app)
     seeder.check_admin()
-    removed = reset(db) if reset_first else {}
+    removed = reset(db, app.config["ADMIN_EMAIL"]) if reset_first else {}
     seeder.run()
     return removed, summarise(db)
 
@@ -694,7 +713,8 @@ def main(argv=None):
 
     if removed:
         print("Removed:", ", ".join(f"{count} {name.replace('_', ' ')}" for name, count in removed.items()))
-    print(f"Users: {summary['users']} demo users (password {DEMO_PASSWORD}) plus the admin")
+    print(f"Users: {summary['users']} demo users and Demo Admin ({DEMO_ADMIN['email']}), all with password {DEMO_PASSWORD}, "
+          "plus the super admin from ADMIN_EMAIL")
     print(f"Documents: {summary['documents']} ({', '.join(f'{name} {count}' for name, count in sorted(summary['by_division'].items()))}), "
           f"{summary['scanned_images']} scanned images")
     print("Text extraction:", ", ".join(f"{status} {count}" for status, count in sorted(summary["ocr"].items())))

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app.demo_seed import DEMO_PASSWORD, DOCUMENTS, USERS, DemoSeedRefused, run_demo_seed
+from app.demo_seed import DEMO_ADMIN, DEMO_PASSWORD, DOCUMENTS, USERS, DemoSeedRefused, run_demo_seed
 
 
 @pytest.fixture(scope="module")
@@ -46,7 +46,9 @@ def test_counts_match_the_story(seeded):
     assert summary["by_division"] == {"Division A": 6, "Division B": 5, "Headquarters": 3}
     assert summary["scanned_images"] == 3
     assert summary["access_requests"] == {"pending": 2, "approved": 2, "rejected": 1, "revoked": 1, "expired": 1}
-    assert db.users.count_documents({"role": "admin"}) == 1
+    assert summary["demo_admin"] is True
+    # The super admin from the config plus the shareable Demo Admin.
+    assert db.users.count_documents({"role": "admin"}) == 2
 
 
 def test_every_document_went_through_the_real_upload(seeded):
@@ -116,6 +118,29 @@ def test_access_states_carry_their_details(seeded):
     assert actions["document.preview"] == 1
 
 
+def test_demo_admin_is_a_headquarters_admin_with_the_demo_password(seeded):
+    app, _, _ = seeded
+    client = app.test_client()
+
+    response = client.post("/api/auth/login", json={"email": DEMO_ADMIN["email"], "password": DEMO_PASSWORD})
+
+    user = response.get_json()["user"]
+    assert response.status_code == 200
+    assert (user["name"], user["role"], user["division"]) == ("Demo Admin", "admin", "Headquarters")
+    headers = {"Authorization": f"Bearer {response.get_json()['token']}"}
+    assert client.get("/api/admin/users", headers=headers).status_code == 200
+
+
+def test_super_admin_from_the_config_is_unchanged(seeded):
+    app, _, _ = seeded
+    config = app.config
+
+    response = app.test_client().post("/api/auth/login", json={"email": config["ADMIN_EMAIL"], "password": config["ADMIN_PASSWORD"]})
+
+    assert response.status_code == 200
+    assert response.get_json()["user"]["email"] == config["ADMIN_EMAIL"]
+
+
 def test_demo_users_can_sign_in(seeded):
     app, _, _ = seeded
     client = app.test_client()
@@ -156,8 +181,10 @@ def test_reset_keeps_admins_divisions_and_fields(seeded):
 
     removed, summary = run_demo_seed(app, reset_first=True)
 
-    assert removed["documents"] == 14 and removed["users"] == 4
+    # The four members and Demo Admin are removed and recreated; the super admin is kept.
+    assert removed["documents"] == 14 and removed["users"] == 5
     assert summary["documents"] == 14 and summary["users"] == 4
-    assert db.users.count_documents({"role": "admin"}) == 1
+    assert db.users.count_documents({"role": "admin"}) == 2
+    assert db.users.count_documents({"email": app.config["ADMIN_EMAIL"]}) == 1
     assert sorted(division["name"] for division in db.divisions.find()) == divisions
     assert sorted(field["key"] for field in db.metadata_fields.find()) == fields
