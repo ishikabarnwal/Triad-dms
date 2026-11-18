@@ -1,0 +1,35 @@
+# Render Blueprint for the API. The frontend is deployed separately on Vercel (see frontend/vercel.json).
+# Step-by-step instructions: docs/DEPLOYMENT.md
+services:
+  - type: web
+    name: triad-dms-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_DB
+        value: triad_dms
+      # Two workers keep the API inside the free plan's 512 MB.
+      - key: GUNICORN_WORKERS
+        value: "2"
+      - key: ALLOW_ANONYMOUS_UPLOAD
+        value: "false"
+      - key: OCR_ENABLED
+        value: "true"
+      # The free plan has a tenth of a CPU; cost 10 keeps sign up responsive and is still OWASP's minimum.
+      - key: BCRYPT_ROUNDS
+        value: "10"
+      - key: ADMIN_EMAIL
+        value: admin@example.com
+      - key: JWT_SECRET
+        generateValue: true
+      # Filled in on the Render dashboard when the Blueprint is created.
+      - key: MONGO_URI
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
