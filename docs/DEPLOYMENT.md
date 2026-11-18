@@ -85,11 +85,11 @@ On PowerShell, put it on one line (or replace each trailing `\` with a backtick)
 - `-e BCRYPT_ROUNDS=10` matches Render, so the demo users' sign-ins are quick on the free CPU.
 - Docker Compose also starts the local MongoDB container because the backend depends on it. Nothing is written to it.
 
-OCR runs on your laptop and the files go to Atlas GridFS. It takes about a minute and ends with the same summary as a local run: 4 users, 14 documents, access requests in every state.
+OCR runs on your laptop and the files go to Atlas GridFS. It takes about a minute and ends with the same summary as a local run: 4 members, Demo Admin, 14 documents, access requests in every state.
 
-Then open the Vercel URL and sign in as `asha.verma@example.com` / `Demo@12345`, or as `admin@example.com` with your Render `ADMIN_PASSWORD`.
+Then open the Vercel URL and sign in as `asha.verma@example.com` / `Demo@12345`, or as `demo.admin@example.com` / `Demo@12345` for the admin screens. Demo Admin is a shareable admin created by the seed and promoted by the real super admin; `admin@example.com` and your Render `ADMIN_PASSWORD` stay private.
 
-To refresh the demo later, run the same command again; `--reset` replaces the demo documents, users, requests and audit log, and keeps the admin, divisions and fields.
+To refresh the demo later, run the same command again; `--reset` replaces the demo documents, users (including Demo Admin), requests and audit log, and keeps the super admin, divisions and fields.
 
 ## Free tier notes
 

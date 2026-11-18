@@ -24,7 +24,7 @@ Then open:
 
 **Before deploying anywhere real**, edit `.env`: set a long random `JWT_SECRET` (e.g. `python -c "import secrets; print(secrets.token_hex(32))"`), a strong `ADMIN_PASSWORD` and `ALLOW_ANONYMOUS_UPLOAD=false`. The admin account is created from `.env` the first time the backend starts.
 
-**What the demo seed does.** Every step goes through the real API in-process, so uploads are stored in GridFS, read by OCR and audited exactly like a real upload. Each step is then dated over the past three weeks. `--reset` first removes documents, stored files, access requests, audit logs and non-admin users; divisions, metadata fields and admins are kept. Without `--reset` the seed refuses to run on a database that already has documents.
+**What the demo seed does.** Every step goes through the real API in-process, so uploads are stored in GridFS, read by OCR and audited exactly like a real upload. Each step is then dated over the past three weeks. It creates four members and a shareable Demo Admin (`demo.admin@example.com`, Headquarters), all with the password `Demo@12345`; Demo Admin signs up like anyone else and is promoted by the super admin. `--reset` first removes documents, stored files, access requests, audit logs, members and Demo Admin; divisions, metadata fields and the super admin from `ADMIN_EMAIL` are kept. Without `--reset` the seed refuses to run on a database that already has documents.
 
 ### Run without Docker
 
@@ -49,7 +49,7 @@ Load the demo data with `python -m app.demo_seed --reset`.
 
 | Suite | Command | Result |
 |---|---|---|
-| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 393 passed |
+| Backend (pytest, real MongoDB) | `docker compose run --rm tests` | 395 passed |
 | Frontend unit tests | `cd frontend && npm ci && npm test` | 6 passed |
 | Evaluators' script | `python test_api.py` | 1 of 1 passed |
 | Extended evaluator-style script | `python test_api_extended.py` | 28 of 28 passed |
@@ -100,7 +100,7 @@ Triad-dms/
 │   ├── nginx.conf           # serves the build and proxies /api to the backend (Docker)
 │   ├── vercel.json          # the same proxying on Vercel
 │   └── Dockerfile
-├── tests/                   # pytest suite (393 tests)
+├── tests/                   # pytest suite (395 tests)
 ├── docs/                    # these guides, plus screenshots/
 ├── test_api.py              # evaluators' script, unchanged
 ├── test_api_extended.py     # extended evaluator-style checks

@@ -42,4 +42,4 @@ What is implemented, grouped by the assignment's core requirements, then what go
 - **Command palette.** Ctrl K finds documents and pages from anywhere; G D, G S, G A and G C jump to the dashboard, search, access requests and (for admins) settings.
 - **Admin settings.** Metadata fields, divisions (a rename carries through users, documents and requests), users (division and role changes) and the audit log.
 - **CI.** GitHub Actions runs the backend suite, both evaluator scripts against a live gunicorn server, and the frontend tests and build on every push.
-- **Demo data.** One command loads four users, 14 documents (three of them scanned images) and access requests in every state, spread over three weeks.
+- **Demo data.** One command loads four members and a demo admin, 14 documents (three of them scanned images) and access requests in every state, spread over three weeks.
