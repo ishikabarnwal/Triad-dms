@@ -1,9 +1,12 @@
 FROM python:3.12-slim AS base
 
+# A fixed mmap threshold makes glibc hand large freed buffers (decoded scans) straight back to the
+# OS instead of keeping them in the heap, so worker memory drops back after each OCR job.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    MALLOC_MMAP_THRESHOLD_=131072
 
 # tesseract does the OCR; curl is only for the container health check.
 RUN apt-get update \
@@ -41,4 +44,6 @@ USER appuser
 EXPOSE 5000
 
 # Seed once here instead of in every gunicorn worker, so workers never race on inserts.
-CMD ["sh", "-c", "python -m app.seed && exec gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-3} --timeout 120 --access-logfile - 'app:create_app()'"]
+# PORT is set by hosts such as Render; locally it falls back to 5000. Workers are recycled after a few
+# hundred requests so memory stays flat on small instances.
+CMD ["sh", "-c", "python -m app.seed && exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers ${GUNICORN_WORKERS:-3} --timeout 120 --max-requests 500 --max-requests-jitter 50 --access-logfile - 'app:create_app()'"]
