@@ -16,6 +16,7 @@ import argparse
 import io
 import json
 import random
+import re
 import sys
 from collections import Counter
 from datetime import datetime, timedelta, timezone
@@ -474,6 +475,17 @@ class DemoSeeder:
         response, _ = self.step(when, lambda: self.call("post", "/auth/login", json=body))
         self.tokens["admin"] = response.get_json()["token"]
 
+    def check_admin(self):
+        """Fail early, before anything is reset, if the configured admin can't sign in."""
+        config = self.app.config
+        body = {"email": config["ADMIN_EMAIL"], "password": config["ADMIN_PASSWORD"]}
+        if self.client.post("/api/auth/login", json=body).status_code != 200:
+            # Usual cause: a deployed server created the admin with a different ADMIN_PASSWORD.
+            raise DemoSeedRefused(
+                f"Couldn't sign in as {config['ADMIN_EMAIL']}. Run the seed with the ADMIN_PASSWORD "
+                "the server was started with, e.g. -e ADMIN_PASSWORD=... Nothing was changed."
+            )
+
     def register(self, key, when):
         """Create a demo user through the sign up endpoint."""
         user = USERS[key]
@@ -624,10 +636,12 @@ def summarise(db):
 def run_demo_seed(app, reset_first=False):
     """Fill the database with the demo story. Returns (removed, summary)."""
     db = app.extensions["mongo_db"]
-    removed = reset(db) if reset_first else {}
     if not reset_first and db.documents.estimated_document_count():
         raise DemoSeedRefused("This database already has documents. Run with --reset to replace them with the demo data.")
-    DemoSeeder(app).run()
+    seeder = DemoSeeder(app)
+    seeder.check_admin()
+    removed = reset(db) if reset_first else {}
+    seeder.run()
     return removed, summarise(db)
 
 
@@ -642,6 +656,9 @@ def main(argv=None):
 
     # The seed makes many sign ins in a few seconds; the login rate limit protects real users, not this.
     app = create_app({"RATELIMIT_STORAGE_URI": "memory://", "RATELIMIT_ENABLED": False})
+    # Say where the data is going (without credentials), so loading into Atlas can't silently hit a local database.
+    target = re.sub(r"//[^@/]*@", "//", app.config["MONGO_URI"])
+    print(f"Database: {target} ({app.config['MONGO_DB']})")
     run_seed(app.extensions["mongo_db"], app.config)
     try:
         removed, summary = run_demo_seed(app, reset_first=args.reset)

@@ -122,6 +122,21 @@ def test_refuses_to_run_over_existing_documents(seeded):
         run_demo_seed(app)
 
 
+def test_wrong_admin_password_refuses_before_anything_is_removed(seeded):
+    app, _, _ = seeded
+    db = app.extensions["mongo_db"]
+    password = app.config["ADMIN_PASSWORD"]
+    app.config["ADMIN_PASSWORD"] = "not-the-server-password"
+    try:
+        with pytest.raises(DemoSeedRefused, match="Nothing was changed"):
+            run_demo_seed(app, reset_first=True)
+    finally:
+        app.config["ADMIN_PASSWORD"] = password
+
+    assert db.documents.count_documents({}) == 14
+    assert db.users.count_documents({"role": {"$ne": "admin"}}) == 4
+
+
 def test_reset_keeps_admins_divisions_and_fields(seeded):
     app, _, _ = seeded
     db = app.extensions["mongo_db"]
