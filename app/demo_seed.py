@@ -352,12 +352,40 @@ class DemoSeedRefused(Exception):
 
 # ---- file builders ----
 
-def _write_page(document, heading, paragraphs, meta_lines):
-    """One A4 page: classification banner, title block on the first page, then the section text."""
+BANNER_SIZE = (200, 20)
+
+
+def banner_image(label):
+    """The classification banner as a small greyscale PNG.
+
+    Banners repeat at the top and bottom of every page. Drawn as text they would end up in the
+    extracted text over and over ("CONFIDENTIAL CONFIDENTIAL" in search snippets), so they are
+    drawn as an image instead; the classification appears once as text in the title block.
+    """
+    width, height = BANNER_SIZE
+    canvas = fitz.open()
+    page = canvas.new_page(width=width, height=height)
+    left = (width - fitz.get_text_length(label, fontname="hebo", fontsize=9)) / 2
+    page.insert_text((left, 14), label, fontsize=9, fontname="hebo")
+    image = page.get_pixmap(dpi=300, colorspace=fitz.csGRAY).tobytes("png")
+    canvas.close()
+    return image
+
+
+def _write_page(document, heading, paragraphs, meta_lines, banner):
+    """One A4 page: classification banners, the title block on the first page, then the section text.
+
+    `banner` is {"png": bytes, "xref": int}; the image is stored once and reused on every page.
+    """
     page = document.new_page(width=595, height=842)
-    banner = meta_lines["classification"]
-    left = (page.rect.width - fitz.get_text_length(banner, fontname="hebo", fontsize=9)) / 2
-    page.insert_text((left, 36), banner, fontsize=9, fontname="hebo")
+    width, height = BANNER_SIZE
+    left = (page.rect.width - width) / 2
+    for top in (24, 810):
+        rect = fitz.Rect(left, top, left + width, top + height)
+        if banner["xref"]:
+            page.insert_image(rect, xref=banner["xref"])
+        else:
+            banner["xref"] = page.insert_image(rect, stream=banner["png"])
     y = 80
     if document.page_count == 1:
         page.insert_text((60, y), meta_lines["title"], fontsize=17, fontname="hebo")
@@ -369,24 +397,22 @@ def _write_page(document, heading, paragraphs, meta_lines):
     page.insert_text((60, y), heading, fontsize=12.5, fontname="hebo")
     y += 10
     page.insert_textbox(fitz.Rect(60, y, 535, 790), "\n\n".join(paragraphs), fontsize=10.5, fontname="helv", lineheight=1.45)
-    # Text is extracted in drawing order, so the footer banner goes last to keep the text reading top to bottom.
-    page.insert_text((left, 818), banner, fontsize=9, fontname="hebo")
 
 
 def build_pdf(spec, division):
     """A multi-page PDF with a real text layer."""
     meta = spec["metadata"]
     meta_lines = {
-        "classification": meta["Classification"],
         "title": spec["title"],
         "details": [
             f"Reference {meta['Reference Number']}  |  {division}  |  Dated {meta['Document Date']}",
-            f"Report type: {meta['Report Type']}",
+            f"Report type: {meta['Report Type']}  |  Classification: {meta['Classification']}",
         ],
     }
+    banner = {"png": banner_image(meta["Classification"]), "xref": 0}
     document = fitz.open()
     for heading, paragraphs in spec["pages"]:
-        _write_page(document, heading, paragraphs, meta_lines)
+        _write_page(document, heading, paragraphs, meta_lines, banner)
     data = document.tobytes(garbage=3, deflate=True)
     document.close()
     return data

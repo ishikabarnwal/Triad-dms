@@ -74,6 +74,17 @@ def test_scanned_images_are_read_by_ocr(seeded):
     assert "tanker" in inspection["ocr_text"].lower()
 
 
+def test_page_banners_stay_out_of_the_extracted_text(seeded):
+    app, _, _ = seeded
+    db = app.extensions["mongo_db"]
+
+    for document in db.documents.find({"content_type": "application/pdf"}):
+        label = document["metadata"]["Classification"]
+        # Once, in the title block; the banners on every page are images, so snippets never repeat them.
+        assert document["ocr_text"].count(label) == 1, document["title"]
+        assert document["ocr_text"].startswith(document["title"])
+
+
 def test_timestamps_are_spread_over_three_weeks(seeded):
     app, _, _ = seeded
     db = app.extensions["mongo_db"]
